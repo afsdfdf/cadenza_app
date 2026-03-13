@@ -7,6 +7,7 @@ import {
   portfolioCards,
   proposals,
   royaltyEvents,
+  siteModules,
   type MusicAsset,
 } from './data'
 
@@ -305,6 +306,25 @@ function buildApp() {
                 )
                 .join('')}
             </section>
+
+            <section class="website-map reveal">
+              <div class="section-mini-head">
+                <span class="eyebrow">From cadenza.ink</span>
+                <strong>Official website modules</strong>
+              </div>
+              <div class="website-grid">
+                ${siteModules
+                  .map(
+                    (item) => `
+                    <article class="website-card">
+                      <span>${item.id}</span>
+                      <h3>${item.title}</h3>
+                      <p>${item.description}</p>
+                    </article>`,
+                  )
+                  .join('')}
+              </div>
+            </section>
           </section>
 
           <section class="screen ${currentTab === 'vault' ? 'is-active' : ''}" data-screen="vault">
@@ -465,6 +485,10 @@ function buildApp() {
               <ul>
                 ${knowledgeNotes.map((note) => `<li>${note}</li>`).join('')}
               </ul>
+              <div class="knowledge-callout">
+                <strong>Website-derived positioning</strong>
+                <p>Cadenza describes itself as Music RWA infrastructure focused on on-chain royalties, NFT plus ERC-20 assets, liquidity, and Web3 fan participation.</p>
+              </div>
               <div class="knowledge-links">
                 <a href="/cadenza/whitepaper.html" target="_blank" rel="noreferrer">Open mirrored whitepaper</a>
                 <a href="/cadenza/source-index.html" target="_blank" rel="noreferrer">Open source site</a>

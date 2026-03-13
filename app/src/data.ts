@@ -23,6 +23,12 @@ export type Proposal = {
   status: string
 }
 
+export type SiteModule = {
+  id: string
+  title: string
+  description: string
+}
+
 export const heroStats = [
   { label: 'Music market', value: '$300B+' },
   { label: 'Streaming share', value: '65%' },
@@ -87,20 +93,53 @@ export const royaltyEvents = [
 
 export const featureFlow = [
   {
-    title: 'Verify copyright',
-    text: 'Upload masters, metadata, and registry proof. Cadenza mints a copyright NFT once checks pass.',
+    title: 'NFT copyright verification',
+    text: 'Each music work is verified through copyright registries and streaming data before a proof NFT is minted.',
   },
   {
-    title: 'Fractionalize future royalties',
-    text: 'Lock the NFT into the tokenization contract and issue ERC-20 fractions for investors and fans.',
+    title: 'ERC-20 fractional ownership',
+    text: 'Verified music rights can be fractionalized into tradable shares so artists, investors, and fans can co-own revenue streams.',
   },
   {
-    title: 'Trade and provide liquidity',
-    text: 'List primary allocations, open AMM pools, and unlock 24/7 secondary market pricing.',
+    title: 'Marketplace and liquidity',
+    text: 'Primary offerings and secondary liquidity pools make music RWA positions discoverable and easier to trade.',
   },
   {
-    title: 'Distribute revenue automatically',
-    text: 'Streaming and sync income flows into the royalty vault and is paid out in stablecoins.',
+    title: 'Automated royalty payouts',
+    text: 'Streaming and sync income is routed into payout vaults and distributed to holders on a fixed schedule.',
+  },
+]
+
+export const siteModules: SiteModule[] = [
+  {
+    id: 'player',
+    title: 'Player',
+    description: 'A futuristic listening interface connected to music asset data, cover art, pricing, and on-chain proof.',
+  },
+  {
+    id: 'market',
+    title: 'Market',
+    description: 'A dedicated market for tokenized tracks, royalty shares, and music RWA discovery.',
+  },
+  {
+    id: 'community',
+    title: 'Community',
+    description: 'A fan-facing layer where listeners can follow releases, back artists, and join the ecosystem.',
+  },
+  {
+    id: 'about',
+    title: 'About',
+    description: 'The site positions Cadenza as Music RWA infrastructure connecting artists, investors, and fans.',
+  },
+  {
+    id: 'technology',
+    title: 'Technology',
+    description: 'Oracle attestation, streaming vaults, auto payouts, compliance guardrails, and optional privacy layers.',
+  },
+  {
+    id: 'contact',
+    title: 'Contact',
+    description: 'Official channels for updates, releases, and community events including social touchpoints.',
   },
 ]
 
