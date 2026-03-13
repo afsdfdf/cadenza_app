@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Cadenza — Whitepaper</title>
+	<link rel="icon" href="./logo.png" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700;800&family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet" />
+	<link rel="stylesheet" href="./styles.css" />
+    <style>
+        :root{
+            --bg:#ffffff; --text:#0f172a; --muted:#475569; --accent:#0ea5e9; --border:#e2e8f0;
+        }
+        html{ scroll-behavior:smooth; }
+        body{ background:var(--bg); color:var(--text); }
+        .wp-topbar{ position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.2) blur(6px); background:rgba(255,255,255,.85); border-bottom:1px solid var(--border); padding:12px 20px; display:flex; align-items:center; justify-content:space-between; }
+        .wp-brand{ display:flex; align-items:center; gap:10px; }
+        .wp-brand .logo{ width:28px; height:28px; object-fit:contain; }
+        .wp-title{ margin:0; font-family:'Work Sans',system-ui,sans-serif; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+        .wp-actions a{ color:var(--muted); text-decoration:none; font-weight:700; }
+        .wp-actions a:hover{ color:var(--text); }
+
+        .wp-hero{ max-width:980px; margin:26px auto 16px; padding:0 16px; text-align:center; }
+        .wp-hero h1{ margin:8px 0 6px; font-family:'Work Sans',system-ui,sans-serif; font-weight:800; letter-spacing:.02em; font-size:34px; }
+        .wp-hero p{ margin:0; color:var(--muted); font-family:'EB Garamond',serif; font-size:18px; }
+        .wp-toc-inline{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:14px auto 6px; padding:0 16px; }
+        .wp-toc-inline a{ text-decoration:none; color:var(--muted); border:1px solid var(--border); padding:8px 12px; border-radius:999px; font-weight:700; font-family:'Work Sans',system-ui,sans-serif; }
+        .wp-toc-inline a:hover, .wp-toc-inline a.active{ color:var(--text); border-color:var(--accent); box-shadow:0 0 0 2px rgba(14,165,233,.15); }
+
+        .wp-container{ max-width:980px; margin:0 auto; padding:8px 16px 40px; }
+        .wp-main{ display:grid; gap:28px; }
+        .wp-section{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:22px; box-shadow:0 2px 8px rgba(15,23,42,.04); display:none; }
+        .wp-section.active{ display:block; }
+        .wp-section h2{ margin:0 0 10px; font-family:'Work Sans',system-ui,sans-serif; font-weight:800; }
+        /* numbering removed */
+        .wp-section p{ margin:0; color:var(--muted); line-height:1.85; font-family:'EB Garamond',serif; font-size:18px; }
+        .wp-section h3{ margin:14px 0 6px; font-family:'Work Sans',system-ui,sans-serif; font-weight:700; }
+        .wp-list{ margin:6px 0 0 18px; color:var(--muted); }
+        .wp-table{ width:100%; border-collapse:collapse; margin-top:8px; font-family:'Work Sans',system-ui,sans-serif; }
+        .wp-table th, .wp-table td{ border:1px solid var(--border); padding:10px 12px; text-align:left; }
+        .wp-table th{ background:#f8fafc; font-weight:700; }
+        .wp-figure{ margin:10px 0; text-align:center; }
+        .wp-figure img{ max-width:100%; height:auto; border:1px solid var(--border); border-radius:8px; }
+        .wp-figure figcaption{ color:var(--muted); font-size:14px; margin-top:6px; font-family:'Work Sans',system-ui,sans-serif; }
+		/* simple flow diagram */
+		.wp-diagram{ margin:12px 0; overflow:auto; }
+		.wp-diagram svg{ width:100%; height:auto; max-height:420px; }
+		.flow-box{ fill:#ffffff; stroke:var(--border); stroke-width:1; rx:10; }
+		.flow-title{ font-family:'Work Sans',system-ui,sans-serif; font-weight:700; fill:var(--text); }
+		.flow-sub{ font-family:'EB Garamond',serif; fill:var(--muted); }
+		.flow-arrow{ stroke:var(--accent); stroke-width:2; marker-end:url(#arrow); }
+		/* tokenomics donut */
+		.wp-donut{ display:grid; grid-template-columns: 240px 1fr; gap:18px; align-items:center; margin:12px 0; }
+		@media (max-width: 700px){ .wp-donut{ grid-template-columns: 1fr; } }
+		.donut-svg{ width:240px; height:240px; }
+		.donut-bg{ fill:none; stroke:#eef2f7; stroke-width:26; }
+		.donut-seg{ fill:none; stroke-width:26; transform: rotate(-90deg); transform-origin: 120px 120px; }
+		.legend{ display:grid; gap:8px; }
+		.legend-row{ display:flex; align-items:center; gap:8px; font-family:'Work Sans',system-ui,sans-serif; color:var(--muted); }
+		.legend-dot{ width:12px; height:12px; border-radius:3px; }
+        /* timeline */
+        .wp-timeline{ margin:14px 0; }
+        .wp-timeline svg{ width:100%; height:auto; max-height:180px; }
+        .tl-line{ stroke:#dbe3ee; stroke-width:4; }
+        .tl-node{ fill:#0ea5e9; }
+        .tl-label{ font-family:'Work Sans',system-ui,sans-serif; fill:var(--text); font-weight:700; }
+        .tl-sub{ font-family:'EB Garamond',serif; fill:var(--muted); font-size:14px; }
+        @media (max-width: 900px){ .wp-hero h1{ font-size:28px; } }
+    </style>
+</head>
+<body>
+	<header class="wp-topbar">
+		<div class="wp-brand">
+			<img class="logo" src="./logo.png" alt="Cadenza" />
+			<h1 class="wp-title">Cadenza Whitepaper</h1>
+		</div>
+		<div class="wp-actions"><a href="./index.html">← Back to Site</a></div>
+	</header>
+
+    <section class="wp-hero">
+        <h1>Cadenza Whitepaper</h1>
+        <p>Designing an on-chain royalty infrastructure for music RWA.</p>
+        <nav id="toc-top" class="wp-toc-inline">
+            <a href="#intro">Introduction</a>
+            <a href="#problem">Problem</a>
+            <a href="#solution">Solution</a>
+            <a href="#tokenomics">Tokenomics</a>
+            <a href="#architecture">Architecture</a>
+            <a href="#risk">Risk & Governance</a>
+            <a href="#roadmap">Roadmap</a>
+        </nav>
+    </section>
+
+    <main class="wp-container">
+        <section class="wp-main">
+            <div id="intro" class="wp-section active">
+				<h2>Introduction</h2>
+				<h3>Background</h3>
+				<p>The global music industry has entered a new era of digital transformation, driven primarily by streaming platforms and digital distribution. In 2023, the global music market exceeded USD 300 billion, with streaming contributing more than 65% of recorded music revenues. Platforms such as Spotify (600M+ monthly active users) and Apple Music (100M+ subscribers) have created sustainable and recurring revenue streams for both artists and rights holders.</p>
+
+				<h3>Mission & Vision</h3>
+				<p><b>Mission</b>: To make music copyrights a universally accessible, transparent, and tradable form of real‑world asset (RWA).</p>
+				<p><b>Vision</b>: To build the world’s leading decentralized platform for music copyright finance, bridging the gap between artists, investors, and fans.</p>
+
+				<h3>Value Proposition</h3>
+				<table class="wp-table">
+					<thead>
+						<tr><th>Stakeholder</th><th>Current Challenges</th><th>Cadenza’s Value Proposition</th></tr>
+					</thead>
+					<tbody>
+						<tr><td>Artists</td><td>Long royalty cycles (6–12 months), limited financing</td><td>Tokenize future royalties, unlock instant liquidity</td></tr>
+						<tr><td>Investors</td><td>High barriers to entry, no direct access to copyrights</td><td>Fractional ownership of music copyrights via tokens</td></tr>
+						<tr><td>Fans</td><td>Passive consumers only</td><td>Participate in success of artists, gain financial upside</td></tr>
+					</tbody>
+				</table>
+
+				<h3>Market Data Snapshot</h3>
+				<ul class="wp-list">
+					<li>Global music copyright market: USD 300B+ in 2023, projected CAGR of 9% through 2030.</li>
+					<li>Streaming royalty growth: expected to reach USD 200B annually by 2030.</li>
+					<li>Independent artists: contribute nearly 30% of streaming revenues, yet remain underserved by financing.</li>
+				</ul>
+
+				<figure class="wp-figure">
+					<img src="./Global Music Industry Market Size.png" alt="Global Music Industry Market Size (2015–2030 Projection)" />
+					<figcaption>Figure 1. Global Music Industry Market Size (2015–2030 Projection)</figcaption>
+				</figure>
+
+				<h3>Strategic Positioning</h3>
+				<p>Cadenza positions itself as a DeFi‑powered marketplace where music copyrights are tokenized into fractional, tradable assets. By leveraging blockchain technology, smart contracts, and decentralized liquidity pools, the platform will:</p>
+				<ul class="wp-list">
+					<li>Provide instant liquidity for artists.</li>
+					<li>Create a transparent royalty distribution system.</li>
+					<li>Enable global participation in music asset investment.</li>
+				</ul>
+			</div>
+			<div id="problem" class="wp-section">
+				<h2>Problem Statement & Market Opportunity</h2>
+				<h3>2.1 Problem Statement</h3>
+				<h4>Challenges for Artists</h4>
+				<ul class="wp-list">
+					<li><b>Delayed Royalty Payments</b>: Traditional royalty distribution cycles can take 6–12 months, causing severe cash flow constraints for independent artists.</li>
+					<li><b>Limited Financing Channels</b>: Most artists cannot access loans or advance payments due to the lack of collateralized financial infrastructure.</li>
+					<li><b>Dependency on Labels</b>: Record labels retain significant bargaining power, limiting artists’ autonomy and revenue share.</li>
+				</ul>
+
+				<h4>Challenges for Investors</h4>
+				<ul class="wp-list">
+					<li><b>High Entry Barriers</b>: Direct access to music copyrights is often restricted to institutional investors and major labels.</li>
+					<li><b>Illiquid Investments</b>: Even when investments are possible, secondary market liquidity is virtually nonexistent.</li>
+					<li><b>Lack of Transparency</b>: Royalty reporting is fragmented, making it difficult to track earnings and assess risk.</li>
+				</ul>
+
+				<h4>Table 1. Current Challenges vs. Market Gaps</h4>
+				<table class="wp-table">
+					<thead>
+						<tr><th>Stakeholder</th><th>Current Challenges</th><th>Market Gap Opportunity</th></tr>
+					</thead>
+					<tbody>
+						<tr><td>Artists</td><td>Long royalty cycles, limited financing, label control</td><td>Need for instant liquidity and decentralized funding</td></tr>
+						<tr><td>Investors</td><td>High barriers, illiquid assets, low transparency</td><td>Need for fractionalized, liquid, transparent assets</td></tr>
+						<tr><td>Fans</td><td>Limited to consumption only</td><td>Opportunity to invest directly in artist success</td></tr>
+					</tbody>
+				</table>
+
+				<h3>2.2 Market Opportunity</h3>
+				<h4>Global Market Size</h4>
+				<ul class="wp-list">
+					<li>The music industry surpassed USD 300 billion in 2023 and is projected to reach USD 500 billion by 2030 (CAGR ~9%).</li>
+					<li>Streaming dominates revenues, accounting for 65% of recorded music revenue.</li>
+				</ul>
+
+				<h4>Streaming Economy</h4>
+				<ul class="wp-list">
+					<li>Streaming royalty revenues are expected to exceed USD 200 billion annually by 2030.</li>
+					<li>Independent artists represent nearly 30% of global streaming income, yet remain underserved by traditional financing.</li>
+				</ul>
+
+				<h4>Web3 Synergy</h4>
+				<ul class="wp-list">
+					<li>Blockchain enables transparent royalty tracking, NFT‑based copyright ownership, and fractionalized investment.</li>
+					<li>Tokenization of music copyrights can bridge the gap between real‑world assets (RWA) and DeFi markets.</li>
+				</ul>
+
+				<figure class="wp-figure">
+					<img src="./Global Music Industry Revenue Breakdown.png" alt="Global Music Industry Revenue Breakdown (2023)" />
+					<figcaption>Figure 2. Global Music Industry Revenue Breakdown (2023)</figcaption>
+				</figure>
+
+				<h3>2.3 Strategic Insight</h3>
+				<p>The convergence of streaming growth, independent artist expansion, and Web3 tokenization presents a transformational opportunity. By fractionalizing music copyrights into tradable digital assets, Cadenza enables:</p>
+				<ul class="wp-list">
+					<li><b>Artists</b> to unlock future earnings and reduce reliance on labels.</li>
+					<li><b>Investors</b> to access a high‑growth, cash‑flow‑generating asset class.</li>
+					<li><b>Fans</b> to transform cultural participation into shared economic upside.</li>
+				</ul>
+			</div>
+			<div id="solution" class="wp-section">
+                <h2>Solution & Product Overview</h2>
+                <h3>3.1 Core Solution</h3>
+                <p>Cadenza redefines the way music copyrights are financed and monetized by leveraging blockchain, NFTs, DeFi, and smart contracts. The platform provides a comprehensive infrastructure where copyright assets can be digitized, tokenized, traded, and yield‑generating.</p>
+
+                <p>The solution integrates four critical pillars:</p>
+                <h4>NFT Copyright Verification</h4>
+                <ul class="wp-list">
+                    <li>Each music work (song, album, or royalty contract) is verified through collaboration with copyright registries and streaming APIs.</li>
+                    <li>Metadata includes ownership details, royalty percentage, contract duration, and licensing rights.</li>
+                    <li>A unique NFT is minted to represent the verified copyright.</li>
+                </ul>
+
+                <h4>Fractionalized Tokens (ERC‑20)</h4>
+                <ul class="wp-list">
+                    <li>Copyright NFTs are locked into a tokenization smart contract.</li>
+                    <li>NFTs are fractionalized into ERC‑20 tokens, allowing thousands of investors to co‑own a single asset.</li>
+                    <li>Example: A song with USD 100,000 expected future royalties → 100,000 tokens minted (1 token = 0.001% royalty rights).</li>
+                </ul>
+
+                <h4>Marketplace & Liquidity Pools</h4>
+                <ul class="wp-list">
+                    <li>A decentralized marketplace enables artists to raise capital upfront by selling fractions of their copyright.</li>
+                    <li>Automated Market Makers (AMMs) ensure token liquidity and secondary market activity.</li>
+                    <li>Cadenza will integrate with existing DeFi protocols (e.g., Uniswap V3, Curve) to bootstrap liquidity.</li>
+                </ul>
+
+                <h4>Automated Royalty Distribution</h4>
+                <ul class="wp-list">
+                    <li>Streaming and licensing royalties flow directly into Cadenza’s Revenue Pool.</li>
+                    <li>Smart contracts calculate proportional payouts and automatically distribute funds to token holders.</li>
+                    <li>Investors can choose payout options in stablecoins (USDC/USDT) for reduced volatility.</li>
+                </ul>
+
+                <h3>3.2 Business & Technical Layers</h3>
+                <table class="wp-table">
+                    <thead>
+                        <tr><th>Layer</th><th>Functionality</th><th>Technologies Used</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Asset Onboarding</td><td>Copyright verification, NFT minting</td><td>Copyright APIs, Legal KYC, NFT metadata</td></tr>
+                        <tr><td>Tokenization Layer</td><td>Fractionalization of NFTs into fungible tokens</td><td>ERC‑20 smart contracts</td></tr>
+                        <tr><td>Liquidity Layer</td><td>Decentralized trading, liquidity pools, and secondary markets</td><td>AMM DEX, Layer‑2 scaling</td></tr>
+                        <tr><td>Revenue Distribution</td><td>Automated payout of royalties to token holders</td><td>Smart contracts, Oracles, Stablecoins</td></tr>
+                        <tr><td>Governance Layer</td><td>DAO voting for protocol upgrades and ecosystem partnerships</td><td>On‑chain governance, Staking mechanisms</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>3.3 User Segments & Value Propositions</h3>
+                <table class="wp-table">
+                    <thead>
+                        <tr><th>User Group</th><th>Current Needs & Pain Points</th><th>Cadenza’s Solution</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Artists</td><td>Need upfront funding; royalties delayed; dependence on record labels</td><td>Tokenize future royalties, raise instant liquidity, retain control</td></tr>
+                        <tr><td>Investors</td><td>Barriers to entry; illiquid copyright investments; opaque royalty flows</td><td>Access fractionalized, transparent, liquid music assets</td></tr>
+                        <tr><td>Fans</td><td>Only passive consumption; limited financial involvement</td><td>Participate in ownership, unlock exclusive rewards, gain upside</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>3.4 Platform Features</h3>
+                <ul class="wp-list">
+                    <li><b>Transparency</b>: All royalty flows recorded on‑chain for immutable accountability.</li>
+                    <li><b>Accessibility</b>: Entry as low as USD 10 equivalent for fractional investment.</li>
+                    <li><b>Liquidity</b>: Tokens tradeable 24/7 in DeFi liquidity pools with transparent pricing.</li>
+                    <li><b>Security</b>: Royalties distributed automatically, removing intermediaries.</li>
+                    <li><b>Fan Engagement</b>: Ownership unlocks exclusive perks: concert tickets, backstage passes, limited NFTs.</li>
+                    <li><b>Cross‑Asset Potential</b>: Beyond songs, future support for albums, publishing rights, performance royalties.</li>
+                </ul>
+
+                <h3>3.5 Market Alignment</h3>
+                <ul class="wp-list">
+                    <li><b>Streaming Market Growth</b>: With 65% of music revenue from streaming (USD 200B expected annually by 2030), Cadenza is positioned to capture a significant share.</li>
+                    <li><b>NFT Adoption</b>: NFT transaction volumes in 2022 surpassed USD 25B, showcasing investor appetite for digital ownership.</li>
+                    <li><b>Fan‑driven Economy</b>: 70% of Gen Z consumers are willing to support creators through direct financial participation.</li>
+                </ul>
+
+                <h3>3.6 End‑to‑End Workflow</h3>
+                <p>Artist Uploads → Verification → NFT Minting → Tokenization → Investment → Royalty Flow → Payout</p>
+                <figure class="wp-figure">
+                    <img src="./Global Music Industry Revenue Breakdown.png" alt="Placeholder diagram" style="display:none" />
+                </figure>
+                <div class="wp-diagram" aria-hidden="true">
+                    <svg viewBox="0 0 980 320" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#0ea5e9" />
+                            </marker>
+                        </defs>
+                        <rect class="flow-box" x="20" y="40" width="140" height="70"/>
+                        <text class="flow-title" x="90" y="70" text-anchor="middle">Artist</text>
+                        <text class="flow-sub" x="90" y="90" text-anchor="middle">Upload + Proof</text>
+
+                        <rect class="flow-box" x="190" y="40" width="160" height="70"/>
+                        <text class="flow-title" x="270" y="70" text-anchor="middle">Verification</text>
+                        <text class="flow-sub" x="270" y="90" text-anchor="middle">Legal + API</text>
+
+                        <rect class="flow-box" x="380" y="40" width="140" height="70"/>
+                        <text class="flow-title" x="450" y="70" text-anchor="middle">NFT</text>
+                        <text class="flow-sub" x="450" y="90" text-anchor="middle">Minted</text>
+
+                        <rect class="flow-box" x="540" y="40" width="160" height="70"/>
+                        <text class="flow-title" x="620" y="70" text-anchor="middle">Tokenization</text>
+                        <text class="flow-sub" x="620" y="90" text-anchor="middle">ERC‑20 shares</text>
+
+                        <rect class="flow-box" x="720" y="40" width="160" height="70"/>
+                        <text class="flow-title" x="800" y="70" text-anchor="middle">Investment</text>
+                        <text class="flow-sub" x="800" y="90" text-anchor="middle">Marketplace/AMM</text>
+
+                        <rect class="flow-box" x="260" y="190" width="200" height="70"/>
+                        <text class="flow-title" x="360" y="220" text-anchor="middle">Revenue Pool</text>
+                        <text class="flow-sub" x="360" y="240" text-anchor="middle">Streaming inflow</text>
+
+                        <rect class="flow-box" x="520" y="190" width="200" height="70"/>
+                        <text class="flow-title" x="620" y="220" text-anchor="middle">Payout</text>
+                        <text class="flow-sub" x="620" y="240" text-anchor="middle">Pro‑rata USDC/USDT</text>
+
+                        <line class="flow-arrow" x1="160" y1="75" x2="190" y2="75"/>
+                        <line class="flow-arrow" x1="350" y1="75" x2="380" y2="75"/>
+                        <line class="flow-arrow" x1="520" y1="75" x2="540" y2="75"/>
+                        <line class="flow-arrow" x1="700" y1="75" x2="720" y2="75"/>
+                        <line class="flow-arrow" x1="540" y1="225" x2="520" y2="225"/>
+                        <line class="flow-arrow" x1="450" y1="110" x2="360" y2="190"/>
+                        <line class="flow-arrow" x1="800" y1="110" x2="720" y2="190"/>
+                    </svg>
+                </div>
+
+                <h3>3.7 Strategic Advantage</h3>
+                <p>Cadenza’s model combines:</p>
+                <ul class="wp-list">
+                    <li><b>NFTs</b> for legal anchoring (unique copyright verification).</li>
+                    <li><b>ERC‑20</b> for liquidity (fungible trading).</li>
+                    <li><b>DeFi</b> for automation (smart contract royalties, AMMs for liquidity).</li>
+                    <li><b>DAO</b> for governance (community‑driven evolution).</li>
+                </ul>
+                <p>This integration positions Cadenza not just as a platform, but as a new financial infrastructure for the music industry — a bridge between culture and decentralized finance.</p>
+			</div>
+			<div id="tokenomics" class="wp-section">
+                <h2>Tokenomics</h2>
+                <h3>4.1 Token Overview</h3>
+                <p>The total supply of Cadenza Token is <b>60,000,000,000</b>. The allocation is designed to balance ecosystem incentives, long‑term team commitment, and sustainable platform growth.</p>
+
+                <h3>4.2 Allocation and Vesting</h3>
+                <table class="wp-table">
+                    <thead>
+                        <tr>
+                            <th>Allocation Category</th><th>% of Total Supply</th><th>Unlock % at TGE</th><th>Cliff (months)</th><th>Vesting (months)</th><th>TGE % of Total Supply</th><th>Token Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Ecosystem & Rewards</td><td>40%</td><td>30%</td><td>0</td><td>36</td><td>12%</td><td>24,000,000,000</td></tr>
+                        <tr><td>Foundation Reserve</td><td>18%</td><td>8%</td><td>6</td><td>42</td><td>1.44%</td><td>10,800,000,000</td></tr>
+                        <tr><td>Core Team & Advisors</td><td>12%</td><td>10%</td><td>12</td><td>48</td><td>1.2%</td><td>7,200,000,000</td></tr>
+                        <tr><td>R&D & Infrastructure Fund</td><td>12%</td><td>15%</td><td>0</td><td>30</td><td>1.8%</td><td>7,200,000,000</td></tr>
+                        <tr><td>Strategic Partners & Data Licensing</td><td>8%</td><td>20%</td><td>6</td><td>24</td><td>1.6%</td><td>4,800,000,000</td></tr>
+                        <tr><td>Marketing & Community</td><td>10%</td><td>25%</td><td>0</td><td>18</td><td>2.5%</td><td>6,000,000,000</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="wp-donut">
+                    <svg class="donut-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="donut-bg" cx="120" cy="120" r="90" />
+                        <!-- segments (clockwise) using stroke-dasharray and dashoffset -->
+                        <!-- total circumference = 2πr ≈ 565.49 -->
+                        <g>
+                            <circle class="donut-seg" cx="120" cy="120" r="90" stroke="#0ea5e9" stroke-dasharray="226.2 339.3" stroke-dashoffset="0" />
+                            <circle class="donut-seg" cx="120" cy="120" r="90" stroke="#22c55e" stroke-dasharray="101.8 463.7" stroke-dashoffset="-226.2" />
+                            <circle class="donut-seg" cx="120" cy="120" r="90" stroke="#f59e0b" stroke-dasharray="67.9 497.6" stroke-dashoffset="-328.0" />
+                            <circle class="donut-seg" cx="120" cy="120" r="90" stroke="#8b5cf6" stroke-dasharray="67.9 497.6" stroke-dashoffset="-395.9" />
+                            <circle class="donut-seg" cx="120" cy="120" r="90" stroke="#ef4444" stroke-dasharray="45.2 520.3" stroke-dashoffset="-463.8" />
+                            <circle class="donut-seg" cx="120" cy="120" r="90" stroke="#14b8a6" stroke-dasharray="56.5 509.0" stroke-dashoffset="-509.0" />
+                        </g>
+                    </svg>
+                    <div class="legend">
+                        <div class="legend-row"><span class="legend-dot" style="background:#0ea5e9"></span> Ecosystem & Rewards (40%)</div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#22c55e"></span> Foundation Reserve (18%)</div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#f59e0b"></span> Core Team & Advisors (12%)</div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#8b5cf6"></span> R&D & Infrastructure (12%)</div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#ef4444"></span> Strategic Partners & Data (8%)</div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#14b8a6"></span> Marketing & Community (10%)</div>
+                    </div>
+                </div>
+
+                <h3>4.3 Design Rationale</h3>
+                <ul class="wp-list">
+                    <li><b>Ecosystem & Rewards (40%)</b>: Incentivize artists, investors, and fans via rewards, staking, and liquidity mining.</li>
+                    <li><b>Foundation Reserve (18%)</b>: Stability reserve for compliance and contingencies.</li>
+                    <li><b>Core Team & Advisors (12%)</b>: Long vesting to align with sustainable growth.</li>
+                    <li><b>R&D & Infrastructure (12%)</b>: Continuous innovation and security.</li>
+                    <li><b>Strategic Partners & Data (8%)</b>: Partnerships with registries, DSPs, and data providers.</li>
+                    <li><b>Marketing & Community (10%)</b>: Brand growth, onboarding campaigns, community incentives.</li>
+                </ul>
+			</div>
+			<div id="architecture" class="wp-section">
+                <h2>Protocol & Technical Architecture</h2>
+                <h3>5.1 Overview</h3>
+                <p>The Cadenza Protocol provides the technical foundation for transforming music copyrights into investable and tradable digital assets. Its architecture ensures trust, scalability, and automation, combining on‑chain smart contracts with off‑chain copyright verification.</p>
+                <p>Cadenza’s architecture is designed around five integrated layers:</p>
+                <ul class="wp-list">
+                    <li><b>Asset Onboarding Layer</b> – Copyright verification and NFT minting.</li>
+                    <li><b>Tokenization Layer</b> – Fractionalization into fungible tokens.</li>
+                    <li><b>Liquidity & Trading Layer</b> – Marketplace and liquidity pools.</li>
+                    <li><b>Royalty Distribution Layer</b> – Automated revenue management.</li>
+                    <li><b>Governance Layer</b> – Community‑driven decision‑making.</li>
+                </ul>
+
+                <h3>5.2 Layered Architecture</h3>
+                <table class="wp-table">
+                    <thead>
+                        <tr><th>Layer</th><th>Description</th><th>Core Technologies & Components</th><th>Key Benefits</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Asset Onboarding Layer</td>
+                            <td>Verifies ownership, ensures compliance, and anchors copyright data on‑chain.</td>
+                            <td>Copyright APIs, legal audits, IPFS for metadata, NFT minting</td>
+                            <td>Legal compliance, transparent verification</td>
+                        </tr>
+                        <tr>
+                            <td>Tokenization Layer</td>
+                            <td>Locks NFTs and fractionalizes them into fungible Cadenza Tokens.</td>
+                            <td>ERC‑20 token contracts, vesting logic, token issuance smart contracts</td>
+                            <td>Accessibility, low entry barrier</td>
+                        </tr>
+                        <tr>
+                            <td>Liquidity & Trading Layer</td>
+                            <td>Provides liquidity and transparent price discovery for copyright tokens.</td>
+                            <td>AMM (Uniswap V3 model), DEX integration, Layer‑2 scaling</td>
+                            <td>24/7 liquidity, global accessibility</td>
+                        </tr>
+                        <tr>
+                            <td>Royalty Distribution Layer</td>
+                            <td>Collects royalties from streaming platforms and automates distribution to token holders.</td>
+                            <td>Stablecoin payment channels, oracle feeds, payout smart contracts</td>
+                            <td>Transparent and trustless revenue sharing</td>
+                        </tr>
+                        <tr>
+                            <td>Governance Layer</td>
+                            <td>DAO‑based governance for protocol upgrades, fee policies, and partnerships.</td>
+                            <td>Token‑weighted voting, proposal modules, treasury management</td>
+                            <td>Community‑driven and decentralized control</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>5.3 Smart Contract Modules</h3>
+                <h4>NFT Module</h4>
+                <ul class="wp-list">
+                    <li>Creates one NFT per music asset.</li>
+                    <li>Metadata includes work ID, copyright owner, royalty share, and distribution contract address.</li>
+                </ul>
+                <h4>Fractionalization Module</h4>
+                <ul class="wp-list">
+                    <li>Locks the NFT in a smart contract.</li>
+                    <li>Mints divisible ERC‑20 tokens representing fractionalized ownership.</li>
+                </ul>
+                <h4>Marketplace Module</h4>
+                <ul class="wp-list">
+                    <li>Facilitates both primary sales (initial token distribution to investors) and secondary sales.</li>
+                    <li>Integrates with AMM pools to guarantee token liquidity.</li>
+                </ul>
+                <h4>Royalty Pool Module</h4>
+                <ul class="wp-list">
+                    <li>Acts as a vault for streaming and licensing revenues.</li>
+                    <li>Distributes funds proportionally to token holders on a monthly or quarterly basis.</li>
+                </ul>
+                <h4>Governance Module</h4>
+                <ul class="wp-list">
+                    <li>Allows token holders to vote on royalty distribution frequency, fee percentages, and partnership integrations.</li>
+                    <li>DAO treasury funds ecosystem initiatives.</li>
+                </ul>
+
+                <h3>5.4 Workflow & Technical Process</h3>
+                <h4>Copyright Verification</h4>
+                <ul class="wp-list">
+                    <li>Artist uploads work, platform connects with copyright registry APIs and auditors.</li>
+                    <li>A digital certificate of verification is generated and stored on‑chain.</li>
+                </ul>
+                <h4>NFT Minting</h4>
+                <ul class="wp-list">
+                    <li>Verified works are minted as unique NFTs.</li>
+                    <li>Metadata includes: artist ID, royalty terms, streaming platform links.</li>
+                </ul>
+                <h4>Tokenization</h4>
+                <ul class="wp-list">
+                    <li>NFT is locked into a Tokenization Contract.</li>
+                    <li>ERC‑20 tokens (Cadenza Tokens) are minted for fractional ownership.</li>
+                </ul>
+                <h4>Liquidity & Trading</h4>
+                <ul class="wp-list">
+                    <li>Tokens are distributed to investors via the Cadenza Marketplace.</li>
+                    <li>Liquidity pools provide ongoing trading opportunities.</li>
+                </ul>
+                <h4>Royalty Flow</h4>
+                <ul class="wp-list">
+                    <li>Streaming platforms send royalties into the Cadenza Royalty Pool (in stablecoins).</li>
+                    <li>Oracles ensure real‑time reporting of revenue inflows.</li>
+                </ul>
+                <h4>Automated Distribution</h4>
+                <ul class="wp-list">
+                    <li>Smart contracts distribute royalties proportionally to token holders’ balances.</li>
+                    <li>Investors can withdraw earnings in stablecoins directly to their wallets.</li>
+                </ul>
+                <h4>Governance Participation</h4>
+                <ul class="wp-list">
+                    <li>Token holders can vote on governance matters.</li>
+                    <li>DAO ensures community‑driven growth.</li>
+                </ul>
+
+                <h3>5.5 Security & Compliance Features</h3>
+                <ul class="wp-list">
+                    <li><b>Smart Contract Audits</b>: All contracts undergo third‑party audits before deployment.</li>
+                    <li><b>Data Immutability</b>: Copyright data anchored on‑chain with IPFS hash storage.</li>
+                    <li><b>Cross‑Chain Compatibility</b>: Supports Ethereum mainnet, BSC, and Layer‑2 solutions for scalability.</li>
+                    <li><b>Oracles</b>: Trusted data feeds connect real‑world streaming revenue with on‑chain distribution contracts.</li>
+                    <li><b>Compliance Layer</b>: Integrated KYC/AML modules for artists and partners to meet regulatory standards.</li>
+                </ul>
+
+                <h3>5.6 Scalability & Future Expansion</h3>
+                <ul class="wp-list">
+                    <li><b>Layer‑2 Integration</b>: Using rollups (e.g., Optimism, zkSync) to reduce gas fees.</li>
+                    <li><b>Multi‑Asset Expansion</b>: Future support for albums, performance rights, and sync licenses.</li>
+                    <li><b>Cross‑Industry Synergy</b>: Framework adaptable to other creative assets (e.g., film, gaming soundtracks).</li>
+                </ul>
+			</div>
+			<div id="risk" class="wp-section">
+                <h2>Risk Management, Compliance & Governance</h2>
+                <h3>6.1 Risk Management</h3>
+                <p>To ensure the long‑term sustainability of the Cadenza Protocol, risk management is embedded across technical, financial, and operational layers.</p>
+                <h4>Table 3. Risk Categories and Mitigation Strategies</h4>
+                <table class="wp-table">
+                    <thead>
+                        <tr><th>Risk Type</th><th>Description</th><th>Mitigation Strategy</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Legal Risk</td><td>Potential copyright disputes, misrepresentation of ownership, regulatory hurdles.</td><td>Third‑party copyright verification, legal audits, KYC for artists, compliance officers.</td></tr>
+                        <tr><td>Market Risk</td><td>Low liquidity, token price volatility, reduced investor participation.</td><td>Liquidity incentives, stablecoin revenue distribution, ecosystem reserve fund.</td></tr>
+                        <tr><td>Technical Risk</td><td>Smart contract vulnerabilities, oracle failures, data tampering.</td><td>Independent audits, bug bounty programs, multi‑oracle systems, insurance pools.</td></tr>
+                        <tr><td>Operational Risk</td><td>Artist default, inaccurate revenue reporting, platform downtime.</td><td>Revenue oracles linked to streaming APIs, diversified revenue sources, SLA monitoring.</td></tr>
+                        <tr><td>Reputational Risk</td><td>Loss of trust due to lack of transparency or governance abuse.</td><td>DAO‑based decision‑making, transparent reporting dashboards, community oversight.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>6.2 Compliance Framework</h3>
+                <p>The music copyright industry is tightly regulated. Cadenza integrates compliance mechanisms to align with international copyright laws and financial regulations:</p>
+                <h4>Copyright Law Alignment</h4>
+                <ul class="wp-list">
+                    <li>Collaborations with copyright registries (e.g., ASCAP, BMI, PRS, international equivalents).</li>
+                    <li>Legal anchoring of NFT metadata to ensure enforceability in real‑world disputes.</li>
+                </ul>
+                <h4>Securities Regulation</h4>
+                <ul class="wp-list">
+                    <li>Token design emphasizes utility + royalty rights rather than speculative securities.</li>
+                    <li>Jurisdictional legal reviews conducted before major token launches.</li>
+                </ul>
+                <h4>KYC/AML Policies</h4>
+                <ul class="wp-list">
+                    <li>Artist onboarding includes identity verification and ownership proof.</li>
+                    <li>Investor compliance modules for anti‑money laundering standards.</li>
+                </ul>
+                <h4>Tax & Reporting</h4>
+                <ul class="wp-list">
+                    <li>Smart contracts provide transparent royalty distribution records.</li>
+                    <li>Potential integration with tax reporting APIs for investors and artists.</li>
+                </ul>
+
+                <h3>6.3 Governance</h3>
+                <p>The governance model of Cadenza is structured as a DAO (Decentralized Autonomous Organization), ensuring that major protocol decisions are transparent, inclusive, and community‑driven.</p>
+                <h4>Governance Structure</h4>
+                <ul class="wp-list">
+                    <li><b>Proposal Stage</b> – Any token holder with a minimum threshold (e.g., 0.5% of circulating tokens) can submit proposals.</li>
+                    <li><b>Discussion Stage</b> – Proposals are discussed within community forums and governance platforms.</li>
+                    <li><b>Voting Stage</b> – Token holders vote proportionally to their holdings.</li>
+                    <li><b>Execution Stage</b> – Approved proposals are executed via on‑chain governance contracts.</li>
+                </ul>
+                <h4>Governance Scope Includes</h4>
+                <ul class="wp-list">
+                    <li>Protocol upgrades (smart contract changes, new modules).</li>
+                    <li>Ecosystem fund allocation (e.g., grants, liquidity incentives).</li>
+                    <li>Partnership approvals (streaming services, copyright agencies).</li>
+                    <li>Adjustment of platform fees and royalty distribution schedules.</li>
+                </ul>
+
+                <h3>6.4 Transparency & Accountability</h3>
+                <ul class="wp-list">
+                    <li><b>On‑Chain Dashboards</b>: Real‑time visibility of token distribution, royalty flows, and governance decisions.</li>
+                    <li><b>Audit Reports</b>: Periodic smart contract and legal audits published openly.</li>
+                    <li><b>Community Oversight</b>: Token holders can form committees for monitoring key risk and compliance areas.</li>
+                </ul>
+
+                <div class="wp-timeline" aria-hidden="true">
+                    <svg viewBox="0 0 980 160" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="60" y1="80" x2="920" y2="80" class="tl-line" />
+                        <circle cx="140" cy="80" r="8" class="tl-node" />
+                        <text x="140" y="60" text-anchor="middle" class="tl-label">Proposal</text>
+                        <text x="140" y="110" text-anchor="middle" class="tl-sub">Threshold reached</text>
+
+                        <circle cx="300" cy="80" r="8" class="tl-node" />
+                        <text x="300" y="60" text-anchor="middle" class="tl-label">Discussion</text>
+                        <text x="300" y="110" text-anchor="middle" class="tl-sub">Forum & review</text>
+
+                        <circle cx="480" cy="80" r="8" class="tl-node" />
+                        <text x="480" y="60" text-anchor="middle" class="tl-label">Voting</text>
+                        <text x="480" y="110" text-anchor="middle" class="tl-sub">On‑chain vote</text>
+
+                        <circle cx="660" cy="80" r="8" class="tl-node" />
+                        <text x="660" y="60" text-anchor="middle" class="tl-label">Execution</text>
+                        <text x="660" y="110" text-anchor="middle" class="tl-sub">Timelock + apply</text>
+
+                        <circle cx="840" cy="80" r="8" class="tl-node" />
+                        <text x="840" y="60" text-anchor="middle" class="tl-label">Reporting</text>
+                        <text x="840" y="110" text-anchor="middle" class="tl-sub">Dashboard & audit</text>
+                    </svg>
+                </div>
+			</div>
+			<div id="roadmap" class="wp-section">
+                <h2>Roadmap & Ecosystem Partnerships</h2>
+                <h3>7.1 Development Roadmap</h3>
+                <p>The development of Cadenza is structured in phases to ensure steady technical progress, market adoption, and ecosystem expansion.</p>
+                <h4>Table 4. Cadenza Roadmap</h4>
+                <table class="wp-table">
+                    <thead>
+                        <tr><th>Phase & Timeline</th><th>Milestones</th><th>Deliverables & Impact</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>2025 Q4</td><td>Platform Alpha Release</td><td>Initial copyright onboarding system, NFT minting demo, closed artist beta</td></tr>
+                        <tr><td>2026 Q2</td><td>Beta Launch</td><td>Tokenization contracts deployed, marketplace live, first artist fundraising campaign</td></tr>
+                        <tr><td>2026 Q4</td><td>Royalty Pool Implementation</td><td>Automated royalty distribution smart contracts, stablecoin payouts</td></tr>
+                        <tr><td>2027 Q2</td><td>Liquidity & Secondary Market Expansion</td><td>Integration with AMM pools, cross‑chain token bridges</td></tr>
+                        <tr><td>2027 Q4</td><td>Global Ecosystem Partnerships</td><td>Partnerships with copyright registries, streaming APIs (Spotify, Apple Music)</td></tr>
+                        <tr><td>2028+</td><td>Multi‑Asset Expansion</td><td>Support for film scores, gaming soundtracks, live performance royalties</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>7.2 Ecosystem Partnerships</h3>
+                <p>To strengthen adoption and ensure compliance, Cadenza will form partnerships across multiple domains:</p>
+                <h4>Music & Copyright Agencies</h4>
+                <ul class="wp-list">
+                    <li>Collaborations with ASCAP, BMI, PRS, SACEM for copyright registration and enforcement.</li>
+                    <li>Legal anchoring of NFT metadata for dispute resolution.</li>
+                </ul>
+                <h4>Streaming Platforms</h4>
+                <ul class="wp-list">
+                    <li>API integration with Spotify, Apple Music, YouTube Music, SoundCloud for real‑time royalty tracking.</li>
+                    <li>Direct revenue feeds into Cadenza’s royalty pool contracts.</li>
+                </ul>
+                <h4>Blockchain & DeFi Infrastructure</h4>
+                <ul class="wp-list">
+                    <li>Integration with Ethereum, BNB Chain, and Layer‑2 rollups for scalable tokenization.</li>
+                    <li>Liquidity partnerships with Uniswap, Curve, Aave for secondary trading and yield opportunities.</li>
+                </ul>
+                <h4>Legal & Compliance Partners</h4>
+                <ul class="wp-list">
+                    <li>Partnerships with international law firms and compliance advisors to ensure multi‑jurisdictional alignment.</li>
+                    <li>Audit collaborations with blockchain security firms for smart contract safety.</li>
+                </ul>
+                <h4>Community & Fan Engagement</h4>
+                <ul class="wp-list">
+                    <li>Partnerships with fan clubs, NFT marketplaces, and event organizers.</li>
+                    <li>Enabling token holders to access exclusive concerts, VIP passes, and collectible NFTs.</li>
+                </ul>
+
+                <h3>7.3 Long‑Term Vision</h3>
+                <p>Cadenza aims to evolve into a global financial infrastructure for cultural assets, bridging the gap between:</p>
+                <ul class="wp-list">
+                    <li>Artists seeking fair and instant financing,</li>
+                    <li>Investors seeking stable and transparent revenue streams, and</li>
+                    <li>Fans seeking deeper engagement and shared success.</li>
+                </ul>
+                <p>The roadmap not only ensures platform maturity but also establishes Cadenza as a benchmark RWA protocol for the creative industry.</p>
+			</div>
+        </section>
+	</main>
+
+	<script>
+		// Highlight active TOC item on scroll
+        (function(){
+            const links = Array.from(document.querySelectorAll('#toc-top a'));
+            const sections = Array.from(document.querySelectorAll('.wp-section'));
+            function activate(id){
+                sections.forEach(s => s.classList.toggle('active', s.id === id));
+                links.forEach(l => l.classList.toggle('active', l.getAttribute('href').slice(1) === id));
+            }
+            links.forEach(a => {
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const id = a.getAttribute('href').slice(1);
+                    activate(id);
+                    history.replaceState(null, '', '#' + id);
+                    window.scrollTo({ top: document.querySelector('.wp-hero').offsetTop, behavior: 'smooth' });
+                });
+            });
+            // initial
+            const hash = location.hash.replace('#','');
+            if (hash) activate(hash); else activate('intro');
+        })();
+	</script>
+</body>
+</html>
+

@@ -1,0 +1,51 @@
+{
+  "project": {
+    "name": "Cadenza",
+    "domain": "https://cadenza.ink/",
+    "x": "https://x.com/cadenza_X",
+    "category": "Music copyright RWA protocol"
+  },
+  "pillars": [
+    "NFT Copyright Verification",
+    "ERC-20 Fractionalization",
+    "Marketplace & Liquidity Pools",
+    "Automated Royalty Distribution",
+    "DAO Governance"
+  ],
+  "market": {
+    "music_market_2023": "USD 300B+",
+    "streaming_share": "65%",
+    "projected_streaming_royalties_2030": "USD 200B annually"
+  },
+  "users": [
+    "Artists",
+    "Investors",
+    "Fans"
+  ],
+  "contracts": [
+    "Copyright NFT",
+    "Fractional ERC-20",
+    "Royalty Pool",
+    "Marketplace / AMM",
+    "Governance"
+  ],
+  "roadmap": [
+    { "phase": "2025 Q4", "goal": "Alpha release and NFT minting demo" },
+    { "phase": "2026 Q2", "goal": "Beta launch and marketplace" },
+    { "phase": "2026 Q4", "goal": "Royalty pool implementation" },
+    { "phase": "2027 Q2", "goal": "Liquidity expansion and bridges" },
+    { "phase": "2027 Q4", "goal": "Global ecosystem partnerships" },
+    { "phase": "2028+", "goal": "Expand to film, gaming, live royalties" }
+  ],
+  "partnership_targets": [
+    "ASCAP",
+    "BMI",
+    "PRS",
+    "Spotify",
+    "Apple Music",
+    "YouTube Music",
+    "Uniswap",
+    "Curve",
+    "Aave"
+  ]
+}

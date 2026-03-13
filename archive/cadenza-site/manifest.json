@@ -1,0 +1,12 @@
+{
+  "base": "https://cadenza.ink/",
+  "files": [
+    "Whitepaper.html",
+    "app.js",
+    "bg1.mp4",
+    "hj.png",
+    "index.html",
+    "logo.png",
+    "styles.css"
+  ]
+}

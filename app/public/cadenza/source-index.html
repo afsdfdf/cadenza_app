@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Cadenza — Music RWA</title>
+	<link rel="icon" href="./logo.png" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Orbitron:wght@400;600;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
+	<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+	<video class="bg-video" src="./bg1.mp4" autoplay muted loop playsinline></video>
+	<header class="topbar">
+		<div class="brand">
+			<img class="logo" src="./logo.png" alt="Cadenza Logo" />
+			<span class="wordmark">Cadenza</span>
+		</div>
+		<nav class="nav">
+			<a href="#player">Player</a>
+			<a href="#market">Market</a>
+			<a href="#upload">Upload</a>
+			<a href="#community">Community</a>
+			<a href="#about">About</a>
+			<a href="#technology">Technology</a>
+			<a href="#contact">Contact</a>
+			<a href="Whitepaper.html"  target="_blank">Whitepaper</a>
+		</nav>
+		<div class="nav-eq" aria-hidden="true">
+			<span></span><span></span><span></span><span></span><span></span>
+		</div>
+		<div class="nav-spacer"></div>
+	</header>
+
+	<main class="container">
+		<section id="player" class="section player-section">
+		
+			<div class="hero-logo">
+				<img src="./logo.png" alt="Cadenza" class="hero-logo-img" />
+			</div>
+			<h1 class="hero-name">Cadenza</h1>
+			<div class="player">
+				<aside class="side-list glass" id="left-panel">
+					<div class="list-header">Trending</div>
+					<ul id="list-left" class="track-list"></ul>
+				</aside>
+				<div class="player-core glass holo">
+					<div class="holo-head">
+						<div class="meta">
+							<h3 id="title">—</h3>
+							<p id="artist">—</p>
+						</div>
+						<div class="chips">
+							<span class="chip">Hi‑Res</span>
+							<span class="chip">On‑chain</span>
+							<span class="chip">Streaming</span>
+						</div>
+					</div>
+					<div class="dial">
+						<svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+							<defs>
+								<linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+									<stop offset="0%" stop-color="#6ae3ff" />
+									<stop offset="100%" stop-color="#8a7dff" />
+								</linearGradient>
+							</defs>
+							<circle class="bg" cx="60" cy="60" r="54" />
+							<circle id="progress-ring" class="fg" cx="60" cy="60" r="54" />
+						</svg>
+						<img id="cover" class="cover round" src="https://picsum.photos/seed/cadenza1/400/400" alt="Cover" />
+						<button id="btn-play" class="control-btn primary center" aria-label="Play/Pause">
+							<span id="play-icon">▶</span>
+						</button>
+					</div>
+					<canvas id="spectrum" height="120"></canvas>
+					<div class="controls">
+						<button id="btn-prev-2" class="control-btn" aria-label="Previous">⏮</button>
+						<button id="btn-play-2" class="control-btn primary" aria-label="Play/Pause"><span id="play-icon-2">▶</span></button>
+						<button id="btn-next" class="control-btn" aria-label="Next">⏭</button>
+					</div>
+					<div class="timeline">
+						<span id="current-time">0:00</span>
+						<input id="seek" type="range" min="0" max="100" value="0" step="1" />
+						<span id="duration">0:00</span>
+					</div>
+					<div class="volume">
+						<label for="volume">VOL</label>
+						<input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" />
+					</div>
+				</div>
+				<aside class="side-list glass" id="right-panel">
+					<div class="list-header">RWA Details</div>
+					<div class="rwa-panel">
+						<img id="rwa-cover" class="rwa-cover" src="https://picsum.photos/seed/cadenza1/400/400" alt="Album Cover" />
+						<div class="kv"><span class="key">Hash</span><span class="val mono" id="rwa-hash">—</span></div>
+						<div class="kv"><span class="key">Proof</span><a class="val link" id="rwa-proof" href="#" target="_blank" rel="noopener">View</a></div>
+						<div class="kv"><span class="key">Total Shares</span><span class="val" id="rwa-shares">—</span></div>
+						<div class="kv"><span class="key">Min Purchase</span><span class="val" id="rwa-min">—</span></div>
+						<div class="kv"><span class="key">Sold</span><span class="val" id="rwa-sold">—</span></div>
+						<div class="kv"><span class="key">Price</span><span class="val" id="rwa-price">—</span></div>
+						<div class="kv"><span class="key">APR</span><span class="val" id="rwa-apr">—</span></div>
+						<div class="kv"><span class="key">Cycle</span><span class="val" id="rwa-cycle">—</span></div>
+						<div class="kv"><span class="key">Issuer</span><span class="val" id="rwa-issuer">—</span></div>
+						<div class="kv"><span class="key">Contract</span><span class="val mono" id="rwa-contract">—</span></div>
+						<button id="btn-buy" class="control-btn primary wide">Coming soon</button>
+					</div>
+				</aside>
+			</div>
+			<audio id="audio" crossorigin="anonymous"></audio>
+		</section>
+
+
+
+
+
+		<section id="market" class="section market-section">
+			<h2 class="section-title">Market</h2>
+			<div id="market-grid" class="market-grid"></div>
+		</section>
+
+		<section id="upload" class="section upload-section">
+			<h2 class="section-title">Upload Your Music</h2>
+			<div class="upload-card glass">
+				<p class="upload-desc">Submit your track and copyright proof. Upon approval, it will be tokenized and listed on the market for revenue sharing.</p>
+				<form id="upload-form" class="upload-form" onsubmit="return false;">
+					<div class="field">
+						<label>Artist</label>
+						<input id="up-artist" type="text" placeholder="Your artist name" required />
+					</div>
+					<div class="field">
+						<label>Title</label>
+						<input id="up-title" type="text" placeholder="Track title" required />
+					</div>
+					<div class="field">
+						<label>Email</label>
+						<input id="up-email" type="email" placeholder="you@example.com" required />
+						<small id="err-email" class="error-text"></small>
+					</div>
+					<div class="grid-2">
+						<div class="field">
+							<label>Audio (MP3/WAV)</label>
+							<div class="drop" id="drop-audio">
+								<input id="file-audio" type="file" accept="audio/*" />
+								<span>Drag & drop or click to select</span>
+							</div>
+						</div>
+						<div class="field">
+							<label>Copyright Proof (PDF/JPG/PNG)</label>
+							<div class="drop" id="drop-proof">
+								<input id="file-proof" type="file" accept="application/pdf,image/*" />
+								<span>Drag & drop or click to select</span>
+							</div>
+						</div>
+					</div>
+					<div class="field">
+						<label>Notes</label>
+						<textarea id="up-notes" rows="3" placeholder="Any context that helps reviewers"></textarea>
+					</div>
+					<button id="btn-submit-upload" class="control-btn primary wide">Submit for review</button>
+					<p id="upload-status" class="upload-status"></p>
+					<div id="upload-preview" class="upload-preview"></div>
+				</form>
+			</div>
+		</section>
+
+		<section id="community" class="section community-section">
+			<h2 class="section-title">Community Music</h2>
+			<div id="community-grid" class="community-grid"></div>
+		</section>
+
+		<section id="about" class="section about-section">
+			<h2 class="section-title">About</h2>
+			<div class="about-card glass">
+				<div class="about-grid">
+					<img src="./hj.png" alt="Cadenza Artwork" class="about-img" />
+					<div class="about-text">
+						<h3 class="about-subtitle">Cadenza — Music RWA</h3>
+						<div class="about-tags">
+							<span class="about-tag">On-chain Royalties</span>
+							<span class="about-tag">NFT + ERC20</span>
+							<span class="about-tag">Liquidity</span>
+							<span class="about-tag">Web3 Fans</span>
+						</div>
+						<p>
+							Cadenza turns music royalties into on-chain assets. Artists can tokenize a portion of
+							future streaming revenue; investors gain transparent yield and liquidity. The platform
+							bridges creators, investors, and fans with a futuristic player, online streaming, and an
+							active market for tokenized tracks.
+						</p>
+						<ul class="about-list">
+							<li>On‑chain royalty distribution</li>
+							<li>NFT + ERC‑20 dual‑layer assets</li>
+							<li>Artist funding and community participation</li>
+						</ul>
+						<div class="about-steps">
+							<div class="step">
+								<h4>1) Submit</h4>
+								<p>Upload audio and proof. We verify authenticity and rights.</p>
+							</div>
+							<div class="step">
+								<h4>2) Tokenize</h4>
+								<p>NFT proof + ERC‑20 shares enable trading and revenue split.</p>
+							</div>
+							<div class="step">
+								<h4>3) Earn</h4>
+								<p>Streaming income auto‑distributed to holders on‑chain.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="technology" class="section tech-section">
+			<h2 class="section-title">Technology</h2>
+			<div class="tech-card glass">
+				<div class="tech-grid">
+					<div class="tech-text">
+						<h3 class="about-subtitle">Core mechanisms</h3>
+						<div class="about-tags">
+							<span class="about-tag">Oracle Attestation</span>
+							<span class="about-tag">Streaming Vault</span>
+							<span class="about-tag">Auto Payout</span>
+						</div>
+						<ul class="tech-list">
+							<li><b>Multi‑source royalty ingestion</b>: aggregate monthly DSP statements into an on‑chain vault.</li>
+							<li><b>Oracle attestation</b>: verified feeds sign statements to prevent tampering and disputes.</li>
+							<li><b>Programmable distribution</b>: pro‑rata payouts to ERC‑20 holders on a fixed schedule.</li>
+							<li><b>Compliance guard</b>: region allow‑lists, KYC tiers and transfer limits when required.</li>
+							<li><b>Emergency switch</b>: pause, escrow and legal review path for disputes.</li>
+							<li><b>Liquidity design</b>: AMM pair + protocol‑owned liquidity for price stability.</li>
+							<li><b>Optional ZK proofs</b>: protect sensitive reports while keeping verifiability.</li>
+						</ul>
+					</div>
+					<img src="./hj.png" alt="Technology" class="tech-img" />
+				</div>
+			</div>
+		</section>
+
+		<section id="contact" class="section contact-section">
+			<h2 class="section-title">Contact</h2>
+			<div class="contact-card glass">
+				<p class="contact-desc">Join our channels to get the latest updates, releases and community events at the first time.</p>
+				<div class="socials">
+					<a class="social-btn tg" href="https://t.me/" target="_blank" rel="noopener" aria-label="Telegram">
+						<span class="icon" aria-hidden="true">
+							<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" fill="none">
+								<circle cx="120" cy="120" r="120" fill="#2AABEE"/>
+								<path d="M178 78L54 126c-4 2-4 7 .4 9l30.7 9.6 12 38.4c1.3 4.3 6.8 5.6 9.9 2.3l17.3-17.8 35.4 26c3.8 2.8 9.2 .9 10.3-3.7L186 83.6c1.2-5-3.6-9.4-8-7.6z" fill="#fff"/>
+							</svg>
+						</span>
+						<span>Telegram</span>
+					</a>
+					<a class="social-btn tw" href="https://twitter.com/" target="_blank" rel="noopener" aria-label="Twitter">
+						<span class="icon" aria-hidden="true">
+							<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+								<rect width="120" height="120" rx="24" fill="#111"/>
+								<path d="M88.7 27H74.6L55.9 53.3 39.4 27H18l30.1 45.7L17 93h14.1l19-26.6L68.6 93H90L58.9 46.6 88.7 27Z" fill="#fff"/>
+							</svg>
+						</span>
+						<span>Twitter</span>
+					</a>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<footer class="footer">
+		<p>© 2025 Cadenza. All rights reserved.</p>
+	</footer>
+
+	<!-- Modal for submission animation -->
+	<div id="submit-modal" class="modal hidden" aria-hidden="true">
+		<div class="modal-backdrop"></div>
+		<div class="modal-body glass">
+			<img src="./logo.png" alt="Cadenza" class="modal-logo" />
+			<div class="notes">
+				<span class="n n1">♪</span>
+				<span class="n n2">♫</span>
+				<span class="n n3">♬</span>
+			</div>
+			<p class="modal-text" id="modal-text">Submitting...</p>
+		</div>
+	</div>
+
+	<script src="./app.js" defer></script>
+</body>
+</html>
+
