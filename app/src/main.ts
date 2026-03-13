@@ -19,12 +19,6 @@ declare global {
 }
 
 type VoteState = Record<string, { support: number; against: number }>
-type MintStage = 'upload' | 'verify' | 'mint' | 'fractionalize' | 'launch'
-type MintUpload = {
-  name: string
-  sizeLabel: string
-  kind: string
-}
 type Holding = {
   assetId: string
   title: string
@@ -49,8 +43,6 @@ let isPlaying = true
 let progress = 18
 let progressTimer = 0
 let metricAnimationRun = 0
-let mintStage: MintStage = 'upload'
-let mintUploads: MintUpload[] = []
 let holdings = loadHoldings()
 let purchaseAssetId: string | null = null
 let voteState: VoteState = Object.fromEntries(
@@ -119,47 +111,6 @@ function formatDisplayNumber(prefix: string, suffix: string, value: number, deci
   return `${prefix}${value.toLocaleString(undefined, options)}${suffix}`
 }
 
-function mintStageLabel(stage: MintStage) {
-  if (stage === 'upload') return 'Upload'
-  if (stage === 'verify') return 'Verify'
-  if (stage === 'mint') return 'Mint NFT'
-  if (stage === 'fractionalize') return 'Fractionalize'
-  return 'Launch'
-}
-
-function canActivateMintStage(stage: MintStage) {
-  if (stage === 'upload') return true
-  if (stage === 'verify') return mintUploads.length > 0
-  if (stage === 'mint') return mintUploads.length > 0
-  if (stage === 'fractionalize') return mintUploads.length > 0
-  if (stage === 'launch') return mintUploads.length > 0
-  return false
-}
-
-function renderMintUploads() {
-  if (!mintUploads.length) {
-    return `
-      <div class="upload-empty">
-        <strong>No files uploaded yet</strong>
-        <span>Add copyright proof, KYC, metadata, or oracle source documents.</span>
-      </div>
-    `
-  }
-
-  return mintUploads
-    .map(
-      (file) => `
-      <article class="upload-item">
-        <div class="upload-item-icon">${file.kind}</div>
-        <div class="upload-item-copy">
-          <strong>${file.name}</strong>
-          <span>${file.sizeLabel}</span>
-        </div>
-      </article>`,
-    )
-    .join('')
-}
-
 function renderHeroStats() {
   return heroStats
     .map((item) => {
@@ -225,7 +176,7 @@ function renderAssetCard(asset: MusicAsset, featured = false) {
           <span>${asset.chain}</span>
         </div>
         <h3>${asset.title}</h3>
-        <p>${asset.artist} · ${asset.genre}</p>
+        <p>${asset.artist} / ${asset.genre}</p>
         <div class="asset-stats">
           <div><label>Valuation</label><strong>${asset.valuation}</strong></div>
           <div><label>Raise</label><strong>${asset.raise}</strong></div>
@@ -309,7 +260,7 @@ function buildApp() {
               <div class="hero-panel-copy">
                 <span class="hero-kicker">Featured rights drop</span>
                 <h2>${current.title}</h2>
-                <p>${current.artist} · ${current.rights} · ${current.monthlyListeners} monthly listeners</p>
+                <p>${current.artist} / ${current.rights} / ${current.monthlyListeners} monthly listeners</p>
                 <div class="hero-cta-row">
                   <button type="button" class="primary-button" data-nav="market">Invest now</button>
                   <button type="button" class="secondary-button" data-nav="mint">Mint track</button>
@@ -458,37 +409,17 @@ function buildApp() {
                 <span>Verification checklist</span>
                 <textarea name="notes" rows="4" placeholder="Copyright registry proof, KYC status, metadata hash, oracle source..."></textarea>
               </label>
-              <div class="upload-panel">
-                <div class="upload-panel-head">
-                  <div>
-                    <span class="eyebrow">Source files</span>
-                    <strong>Upload supporting documents</strong>
-                  </div>
-                  <button type="button" class="secondary-button compact upload-trigger" id="upload-trigger">Upload files</button>
-                </div>
-                <input type="file" id="mint-upload-input" class="mint-file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.csv,.json,.txt">
-                <div class="upload-list">
-                  ${renderMintUploads()}
-                </div>
-              </div>
               <div class="mint-flow">
-                ${(['upload', 'verify', 'mint', 'fractionalize', 'launch'] as MintStage[])
-                  .map(
-                    (stage) => `
-                    <button
-                      type="button"
-                      class="mint-step ${mintStage === stage ? 'is-hot' : ''} ${canActivateMintStage(stage) ? '' : 'is-locked'}"
-                      data-mint-stage="${stage}"
-                    >
-                      ${mintStageLabel(stage)}
-                    </button>`,
-                  )
-                  .join('')}
+                <span class="mint-step is-hot">Catalog review</span>
+                <span class="mint-step is-hot">Rights check</span>
+                <span class="mint-step">Mint NFT</span>
+                <span class="mint-step">Fractionalize</span>
+                <span class="mint-step">Launch</span>
               </div>
               <div class="mint-hints">
-                <span class="${mintUploads.length ? 'is-ready' : ''}">ASCAP / BMI style proof</span>
-                <span class="${mintUploads.length ? 'is-ready' : ''}">Metadata hash</span>
-                <span class="${mintStage === 'launch' ? 'is-ready' : ''}">Stablecoin payout ready</span>
+                <span class="is-ready">Rights intake ready</span>
+                <span class="is-ready">Metadata prepared</span>
+                <span>Stablecoin payout ready</span>
               </div>
               <button type="submit" class="primary-button wide">Create music RWA</button>
             </form>
@@ -635,7 +566,7 @@ function renderSheet(asset: MusicAsset) {
     <img src="${asset.image}" alt="${asset.title}" class="sheet-art">
     <div class="asset-tags"><span>${asset.id}</span><span>${asset.chain}</span></div>
     <h2>${asset.title}</h2>
-    <p class="sheet-sub">${asset.artist} · ${asset.genre}</p>
+    <p class="sheet-sub">${asset.artist} / ${asset.genre}</p>
     <div class="sheet-grid">
       <div><label>Rights</label><strong>${asset.rights}</strong></div>
       <div><label>Raise</label><strong>${asset.raise}</strong></div>
@@ -770,22 +701,8 @@ function wireEvents() {
     refresh()
   })
 
-  document.querySelector<HTMLButtonElement>('#upload-trigger')?.addEventListener('click', () => {
-    document.querySelector<HTMLInputElement>('#mint-upload-input')?.click()
-  })
-
-  document.querySelector<HTMLInputElement>('#mint-upload-input')?.addEventListener('change', onMintUpload)
   document.querySelector<HTMLFormElement>('#purchase-form')?.addEventListener('submit', onPurchaseSubmit)
   document.querySelector<HTMLInputElement>('#purchase-form input[name="units"]')?.addEventListener('input', updatePurchaseQuote)
-
-  document.querySelectorAll<HTMLElement>('[data-mint-stage]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const stage = button.getAttribute('data-mint-stage') as MintStage | null
-      if (!stage || !canActivateMintStage(stage)) return
-      mintStage = stage
-      refresh()
-    })
-  })
 
   document.querySelector<HTMLFormElement>('#mint-form')?.addEventListener('submit', onMintSubmit)
 
@@ -803,24 +720,6 @@ function wireEvents() {
       refresh()
     })
   })
-}
-
-function onMintUpload(event: Event) {
-  const input = event.currentTarget as HTMLInputElement
-  const files = Array.from(input.files ?? [])
-  if (!files.length) return
-
-  const mapped = files.map((file) => ({
-    name: file.name,
-    sizeLabel: `${(file.size / 1024 / 1024).toFixed(file.size > 1024 * 1024 ? 1 : 2)} MB`,
-    kind: file.name.split('.').pop()?.toUpperCase() ?? 'FILE',
-  }))
-
-  mintUploads = [...mintUploads, ...mapped].slice(-4)
-  if (mintStage === 'upload') mintStage = 'verify'
-  showToast(`${files.length} file${files.length > 1 ? 's' : ''} uploaded.`)
-  input.value = ''
-  refresh()
 }
 
 function updatePurchaseQuote() {
@@ -898,11 +797,6 @@ function onMintSubmit(event: Event) {
     return
   }
 
-  if (!mintUploads.length) {
-    showToast('Upload supporting files before creating the music RWA.')
-    return
-  }
-
   const newAsset: MusicAsset = {
     id: `CDZ-${Math.floor(Math.random() * 900 + 100)}`,
     title,
@@ -921,8 +815,6 @@ function onMintSubmit(event: Event) {
 
   createdAssets = [newAsset, ...createdAssets]
   persistCreatedAssets()
-  mintStage = 'launch'
-  mintUploads = []
   showToast(`${title} is now queued for copyright verification.`)
   currentTab = 'market'
   currentFilter = 'All'
@@ -983,3 +875,4 @@ if (app) {
   animateCountups()
   if (isPlaying) startPlayerLoop()
 }
+
