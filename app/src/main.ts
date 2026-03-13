@@ -25,11 +25,19 @@ type MintUpload = {
   sizeLabel: string
   kind: string
 }
+type Holding = {
+  assetId: string
+  title: string
+  artist: string
+  units: number
+  invested: number
+  payout: number
+}
 
 const storageKeys = {
   minted: 'cadenza-minted-assets',
   wallet: 'cadenza-wallet-address',
-  demo: 'cadenza-demo-mode',
+  holdings: 'cadenza-holdings',
 }
 
 let connectedWallet = window.localStorage.getItem(storageKeys.wallet) ?? ''
@@ -40,11 +48,11 @@ let activePlayer = 0
 let isPlaying = true
 let progress = 18
 let progressTimer = 0
-let demoRun = 0
 let metricAnimationRun = 0
-let demoMode = window.localStorage.getItem(storageKeys.demo) !== 'off'
 let mintStage: MintStage = 'upload'
 let mintUploads: MintUpload[] = []
+let holdings = loadHoldings()
+let purchaseAssetId: string | null = null
 let voteState: VoteState = Object.fromEntries(
   proposals.map((proposal) => [proposal.id, { support: proposal.support, against: proposal.against }]),
 )
@@ -61,6 +69,20 @@ function loadCreatedAssets(): MusicAsset[] {
 
 function persistCreatedAssets() {
   window.localStorage.setItem(storageKeys.minted, JSON.stringify(createdAssets))
+}
+
+function loadHoldings(): Holding[] {
+  try {
+    const raw = window.localStorage.getItem(storageKeys.holdings)
+    if (!raw) return []
+    return JSON.parse(raw) as Holding[]
+  } catch {
+    return []
+  }
+}
+
+function persistHoldings() {
+  window.localStorage.setItem(storageKeys.holdings, JSON.stringify(holdings))
 }
 
 function formatWallet(address: string) {
@@ -152,6 +174,42 @@ function renderHeroStats() {
     .join('')
 }
 
+function assetUnitPrice(asset: MusicAsset) {
+  const raise = parseDisplayNumber(asset.raise)?.numeric ?? 0
+  return Math.max(25, Math.round(raise / 1000))
+}
+
+function renderHoldings() {
+  if (!holdings.length) {
+    return `
+      <article class="soft-card reveal">
+        <span>Portfolio positions</span>
+        <strong>No fractions purchased yet</strong>
+        <p>Buy music RWA fractions to see your positions, invested capital, and payout estimates here.</p>
+      </article>
+    `
+  }
+
+  return holdings
+    .map(
+      (holding) => `
+      <article class="holding-card reveal">
+        <div class="holding-copy">
+          <div>
+            <strong>${holding.title}</strong>
+            <span>${holding.artist}</span>
+          </div>
+          <em>${holding.units} fractions</em>
+        </div>
+        <div class="holding-stats">
+          <div><label>Invested</label><strong>$${holding.invested.toLocaleString()}</strong></div>
+          <div><label>Next payout</label><strong>$${holding.payout.toLocaleString()}</strong></div>
+        </div>
+      </article>`,
+    )
+    .join('')
+}
+
 function renderAssetCard(asset: MusicAsset, featured = false) {
   const soldParsed = parseDisplayNumber(`${asset.sold}`)
   const aprParsed = parseDisplayNumber(asset.apr)
@@ -176,7 +234,10 @@ function renderAssetCard(asset: MusicAsset, featured = false) {
         </div>
         <div class="asset-footer">
           <span>${asset.rights}</span>
-          <button type="button" class="ghost-chip" data-open-sheet="${asset.id}">View deal</button>
+          <div class="asset-actions">
+            <button type="button" class="ghost-chip" data-open-sheet="${asset.id}">View deal</button>
+            <button type="button" class="ghost-chip buy-chip" data-start-purchase="${asset.id}">Buy</button>
+          </div>
         </div>
       </div>
     </article>
@@ -214,6 +275,8 @@ function buildApp() {
   const tracks = allAssets()
   const current = tracks[activePlayer] ?? tracks[0]
   const marketAssets = filteredAssets()
+  const purchaseAsset = purchaseAssetId ? allAssets().find((asset) => asset.id === purchaseAssetId) : null
+  const unitPrice = purchaseAsset ? assetUnitPrice(purchaseAsset) : 0
 
   return `
     <div class="app-shell">
@@ -232,14 +295,6 @@ function buildApp() {
             <span>Music copyright RWA</span>
           </div>
           <button type="button" class="wallet-chip" id="wallet-button">${formatWallet(connectedWallet)}</button>
-        </div>
-
-        <div class="demo-hud reveal">
-          <div class="demo-hud-copy">
-            <span class="eyebrow">Demo mode</span>
-            <strong>${demoMode ? 'Autoplaying product tour' : 'Manual interaction mode'}</strong>
-          </div>
-          <button type="button" class="demo-toggle ${demoMode ? 'is-active' : ''}" id="demo-toggle">${demoMode ? 'Auto On' : 'Auto Off'}</button>
         </div>
 
         <main class="screen-stack">
@@ -345,6 +400,7 @@ function buildApp() {
             </section>
 
             <section class="portfolio-list">
+              ${renderHoldings()}
               ${allAssets()
                 .slice(0, 3)
                 .map((asset) => renderAssetCard(asset))
@@ -514,6 +570,44 @@ function buildApp() {
 
       <div class="sheet-backdrop hidden" id="sheet-backdrop"></div>
       <aside class="detail-sheet hidden" id="detail-sheet" aria-hidden="true"></aside>
+      <div class="sheet-backdrop ${purchaseAsset ? '' : 'hidden'}" id="purchase-backdrop"></div>
+      <aside class="purchase-sheet ${purchaseAsset ? '' : 'hidden'}" id="purchase-sheet" aria-hidden="${purchaseAsset ? 'false' : 'true'}">
+        ${
+          purchaseAsset
+            ? `
+            <button type="button" class="sheet-close" id="purchase-close">Close</button>
+            <div class="purchase-head">
+              <span class="eyebrow">Primary purchase</span>
+              <h2>${purchaseAsset.title}</h2>
+              <p>${purchaseAsset.artist} / ${purchaseAsset.rights}</p>
+            </div>
+            <form class="purchase-form" id="purchase-form">
+              <div class="purchase-summary">
+                <div><label>Unit price</label><strong>$${unitPrice}</strong></div>
+                <div><label>Network</label><strong>${purchaseAsset.chain}</strong></div>
+              </div>
+              <label>
+                <span>How many fractions</span>
+                <input type="number" name="units" min="1" value="4" required>
+              </label>
+              <label>
+                <span>Settlement token</span>
+                <select name="token">
+                  <option>USDC</option>
+                  <option>USDT</option>
+                  <option>ETH</option>
+                </select>
+              </label>
+              <div class="purchase-breakdown">
+                <div><label>Order value</label><strong id="purchase-total">$${(unitPrice * 4).toLocaleString()}</strong></div>
+                <div><label>Protocol fee</label><strong id="purchase-fee">$${Math.max(2, Math.round(unitPrice * 4 * 0.02)).toLocaleString()}</strong></div>
+                <div><label>Projected payout</label><strong id="purchase-payout">$${Math.max(8, Math.round(unitPrice * 4 * 0.09)).toLocaleString()}</strong></div>
+              </div>
+              <button type="submit" class="primary-button wide">Pay and confirm</button>
+            </form>`
+            : ''
+        }
+      </aside>
       <div class="toast hidden" id="toast"></div>
     </div>
   `
@@ -561,8 +655,9 @@ function renderSheet(asset: MusicAsset) {
 
   document.querySelector<HTMLButtonElement>('#sheet-close')?.addEventListener('click', closeSheet)
   document.querySelector<HTMLButtonElement>(`[data-buy="${asset.id}"]`)?.addEventListener('click', () => {
-    showToast(`Order routed for ${asset.title}.`)
+    purchaseAssetId = asset.id
     closeSheet()
+    refresh()
   })
 }
 
@@ -572,6 +667,11 @@ function closeSheet() {
   sheet?.classList.add('hidden')
   backdrop?.classList.add('hidden')
   sheet?.setAttribute('aria-hidden', 'true')
+}
+
+function closePurchaseSheet() {
+  purchaseAssetId = null
+  refresh()
 }
 
 function animateCountups() {
@@ -636,8 +736,18 @@ function wireEvents() {
     })
   })
 
+  document.querySelectorAll<HTMLElement>('[data-start-purchase]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const assetId = button.getAttribute('data-start-purchase')
+      if (!assetId) return
+      purchaseAssetId = assetId
+      refresh()
+    })
+  })
+
   document.querySelector('#sheet-backdrop')?.addEventListener('click', closeSheet)
-  document.querySelector<HTMLButtonElement>('#demo-toggle')?.addEventListener('click', toggleDemoMode)
+  document.querySelector('#purchase-backdrop')?.addEventListener('click', closePurchaseSheet)
+  document.querySelector('#purchase-close')?.addEventListener('click', closePurchaseSheet)
 
   document.querySelectorAll<HTMLElement>('[data-filter]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -665,6 +775,8 @@ function wireEvents() {
   })
 
   document.querySelector<HTMLInputElement>('#mint-upload-input')?.addEventListener('change', onMintUpload)
+  document.querySelector<HTMLFormElement>('#purchase-form')?.addEventListener('submit', onPurchaseSubmit)
+  document.querySelector<HTMLInputElement>('#purchase-form input[name="units"]')?.addEventListener('input', updatePurchaseQuote)
 
   document.querySelectorAll<HTMLElement>('[data-mint-stage]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -711,63 +823,63 @@ function onMintUpload(event: Event) {
   refresh()
 }
 
-function setMintField(name: string, value: string) {
-  const field = document.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(`#mint-form [name="${name}"]`)
-  if (!field) return
-  field.value = value
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  field.dispatchEvent(new Event('change', { bubbles: true }))
+function updatePurchaseQuote() {
+  if (!purchaseAssetId) return
+  const asset = allAssets().find((item) => item.id === purchaseAssetId)
+  const unitsInput = document.querySelector<HTMLInputElement>('#purchase-form input[name="units"]')
+  if (!asset || !unitsInput) return
+  const units = Math.max(1, Number(unitsInput.value) || 1)
+  const unitPrice = assetUnitPrice(asset)
+  const total = units * unitPrice
+  const fee = Math.max(2, Math.round(total * 0.02))
+  const payout = Math.max(8, Math.round(total * 0.09))
+
+  const totalNode = document.querySelector<HTMLElement>('#purchase-total')
+  const feeNode = document.querySelector<HTMLElement>('#purchase-fee')
+  const payoutNode = document.querySelector<HTMLElement>('#purchase-payout')
+  if (totalNode) totalNode.textContent = `$${total.toLocaleString()}`
+  if (feeNode) feeNode.textContent = `$${fee.toLocaleString()}`
+  if (payoutNode) payoutNode.textContent = `$${payout.toLocaleString()}`
 }
 
-function toggleDemoMode() {
-  demoMode = !demoMode
-  window.localStorage.setItem(storageKeys.demo, demoMode ? 'on' : 'off')
+function onPurchaseSubmit(event: Event) {
+  event.preventDefault()
+  if (!purchaseAssetId) return
+  const asset = allAssets().find((item) => item.id === purchaseAssetId)
+  const form = event.currentTarget as HTMLFormElement
+  const data = new FormData(form)
+  const units = Math.max(1, Number(data.get('units') ?? 1))
+  const token = String(data.get('token') ?? 'USDC')
+  if (!asset) return
+
+  const unitPrice = assetUnitPrice(asset)
+  const invested = units * unitPrice
+  const payout = Math.max(8, Math.round(invested * 0.09))
+  const existing = holdings.find((holding) => holding.assetId === asset.id)
+
+  if (existing) {
+    existing.units += units
+    existing.invested += invested
+    existing.payout += payout
+  } else {
+    holdings = [
+      {
+        assetId: asset.id,
+        title: asset.title,
+        artist: asset.artist,
+        units,
+        invested,
+        payout,
+      },
+      ...holdings,
+    ]
+  }
+
+  persistHoldings()
+  purchaseAssetId = null
+  currentTab = 'vault'
+  showToast(`Payment successful via ${token}. ${units} fractions added to your vault.`)
   refresh()
-  if (demoMode) startDemoMode()
-  else demoRun += 1
-}
-
-function queueDemo(delay: number, run: number, action: () => void) {
-  window.setTimeout(() => {
-    if (!demoMode || run !== demoRun) return
-    action()
-  }, delay)
-}
-
-function startDemoMode() {
-  demoRun += 1
-  const run = demoRun
-  const firstAsset = allAssets()[0]
-
-  queueDemo(500, run, () => connectWallet())
-  queueDemo(2600, run, () => {
-    if (firstAsset) renderSheet(firstAsset)
-  })
-  queueDemo(5600, run, () => closeSheet())
-  queueDemo(7600, run, () => switchTab('vault'))
-  queueDemo(10300, run, () => showToast('Stablecoin payout claimed to your wallet.'))
-  queueDemo(12800, run, () => switchTab('mint'))
-  queueDemo(15100, run, () => setMintField('artist', 'Nova Aster'))
-  queueDemo(16100, run, () => setMintField('title', 'Midnight Halo'))
-  queueDemo(17100, run, () => setMintField('raise', '120000'))
-  queueDemo(18100, run, () => setMintField('valuation', '480000'))
-  queueDemo(19400, run, () => setMintField('notes', 'Copyright registry proof verified. Metadata hash pinned. Stablecoin payout schedule ready.'))
-  queueDemo(22200, run, () => document.querySelector<HTMLButtonElement>('#mint-form button[type="submit"]')?.click())
-  queueDemo(25200, run, () => {
-    currentFilter = 'Streaming'
-    refresh()
-  })
-  queueDemo(28200, run, () => {
-    const asset = filteredAssets()[0] ?? allAssets()[0]
-    if (asset) renderSheet(asset)
-  })
-  queueDemo(31400, run, () => closeSheet())
-  queueDemo(33800, run, () => switchTab('dao'))
-  queueDemo(36500, run, () => document.querySelector<HTMLButtonElement>('[data-vote="G-12"][data-side="support"]')?.click())
-  queueDemo(40200, run, () => switchTab('discover'))
-  queueDemo(52000, run, () => {
-    if (demoMode && run === demoRun) startDemoMode()
-  })
 }
 
 function onMintSubmit(event: Event) {
@@ -819,9 +931,9 @@ function onMintSubmit(event: Event) {
 
 async function connectWallet() {
   if (!window.ethereum) {
-    connectedWallet = 'Demo connected'
+    connectedWallet = 'Wallet ready'
     window.localStorage.setItem(storageKeys.wallet, connectedWallet)
-    showToast('Demo wallet connected.')
+    showToast('Wallet connected.')
     refresh()
     return
   }
@@ -870,5 +982,4 @@ if (app) {
   triggerReveal()
   animateCountups()
   if (isPlaying) startPlayerLoop()
-  if (demoMode) startDemoMode()
 }
