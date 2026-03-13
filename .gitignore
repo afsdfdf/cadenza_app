@@ -2,3 +2,5 @@ app/node_modules
 app/dist
 app/vite.log
 .vercel
+promo/
+*_TEMP_MPY_wvf_snd.mp4

@@ -19,10 +19,17 @@ declare global {
 }
 
 type VoteState = Record<string, { support: number; against: number }>
+type MintStage = 'upload' | 'verify' | 'mint' | 'fractionalize' | 'launch'
+type MintUpload = {
+  name: string
+  sizeLabel: string
+  kind: string
+}
 
 const storageKeys = {
   minted: 'cadenza-minted-assets',
   wallet: 'cadenza-wallet-address',
+  demo: 'cadenza-demo-mode',
 }
 
 let connectedWallet = window.localStorage.getItem(storageKeys.wallet) ?? ''
@@ -30,9 +37,14 @@ let createdAssets = loadCreatedAssets()
 let currentTab = 'discover'
 let currentFilter = 'All'
 let activePlayer = 0
-let isPlaying = false
+let isPlaying = true
 let progress = 18
 let progressTimer = 0
+let demoRun = 0
+let metricAnimationRun = 0
+let demoMode = window.localStorage.getItem(storageKeys.demo) !== 'off'
+let mintStage: MintStage = 'upload'
+let mintUploads: MintUpload[] = []
 let voteState: VoteState = Object.fromEntries(
   proposals.map((proposal) => [proposal.id, { support: proposal.support, against: proposal.against }]),
 )
@@ -69,19 +81,80 @@ function filteredAssets() {
   })
 }
 
-function renderHeroStats() {
-  return heroStats
+function parseDisplayNumber(value: string) {
+  const match = value.match(/-?[\d,.]+/)
+  if (!match) return null
+  const numeric = Number(match[0].replace(/,/g, ''))
+  if (Number.isNaN(numeric)) return null
+  const prefix = value.slice(0, match.index)
+  const suffix = value.slice((match.index ?? 0) + match[0].length)
+  const decimals = match[0].includes('.') ? match[0].split('.')[1].length : 0
+  return { numeric, prefix, suffix, decimals }
+}
+
+function formatDisplayNumber(prefix: string, suffix: string, value: number, decimals: number) {
+  const options = decimals > 0 ? { minimumFractionDigits: decimals, maximumFractionDigits: decimals } : {}
+  return `${prefix}${value.toLocaleString(undefined, options)}${suffix}`
+}
+
+function mintStageLabel(stage: MintStage) {
+  if (stage === 'upload') return 'Upload'
+  if (stage === 'verify') return 'Verify'
+  if (stage === 'mint') return 'Mint NFT'
+  if (stage === 'fractionalize') return 'Fractionalize'
+  return 'Launch'
+}
+
+function canActivateMintStage(stage: MintStage) {
+  if (stage === 'upload') return true
+  if (stage === 'verify') return mintUploads.length > 0
+  if (stage === 'mint') return mintUploads.length > 0
+  if (stage === 'fractionalize') return mintUploads.length > 0
+  if (stage === 'launch') return mintUploads.length > 0
+  return false
+}
+
+function renderMintUploads() {
+  if (!mintUploads.length) {
+    return `
+      <div class="upload-empty">
+        <strong>No files uploaded yet</strong>
+        <span>Add copyright proof, KYC, metadata, or oracle source documents.</span>
+      </div>
+    `
+  }
+
+  return mintUploads
     .map(
-      (item) => `
-      <article class="metric-card reveal">
-        <strong>${item.value}</strong>
-        <span>${item.label}</span>
+      (file) => `
+      <article class="upload-item">
+        <div class="upload-item-icon">${file.kind}</div>
+        <div class="upload-item-copy">
+          <strong>${file.name}</strong>
+          <span>${file.sizeLabel}</span>
+        </div>
       </article>`,
     )
     .join('')
 }
 
+function renderHeroStats() {
+  return heroStats
+    .map((item) => {
+      const parsed = parseDisplayNumber(item.value)
+      const initialValue = parsed ? formatDisplayNumber(parsed.prefix, parsed.suffix, 0, parsed.decimals) : item.value
+      return `
+      <article class="metric-card reveal">
+        <strong ${parsed ? `data-countup="${parsed.numeric}" data-prefix="${parsed.prefix}" data-suffix="${parsed.suffix}" data-decimals="${parsed.decimals}"` : ''}>${initialValue}</strong>
+        <span>${item.label}</span>
+      </article>`
+    })
+    .join('')
+}
+
 function renderAssetCard(asset: MusicAsset, featured = false) {
+  const soldParsed = parseDisplayNumber(`${asset.sold}`)
+  const aprParsed = parseDisplayNumber(asset.apr)
   return `
     <article class="asset-card ${featured ? 'featured' : ''} reveal">
       <div class="asset-art-wrap">
@@ -98,8 +171,8 @@ function renderAssetCard(asset: MusicAsset, featured = false) {
         <div class="asset-stats">
           <div><label>Valuation</label><strong>${asset.valuation}</strong></div>
           <div><label>Raise</label><strong>${asset.raise}</strong></div>
-          <div><label>Sold</label><strong>${asset.sold}%</strong></div>
-          <div><label>APR</label><strong>${asset.apr}</strong></div>
+          <div><label>Sold</label><strong ${soldParsed ? `data-countup="${soldParsed.numeric}" data-prefix="" data-suffix="%" data-decimals="0"` : ''}>0%</strong></div>
+          <div><label>APR</label><strong ${aprParsed ? `data-countup="${aprParsed.numeric}" data-prefix="${aprParsed.prefix}" data-suffix="${aprParsed.suffix}" data-decimals="${aprParsed.decimals}"` : ''}>0%</strong></div>
         </div>
         <div class="asset-footer">
           <span>${asset.rights}</span>
@@ -126,7 +199,7 @@ function renderProposalCard(id: string) {
       <p>${proposal.summary}</p>
       <div class="vote-track"><span style="width:${supportRatio}%"></span></div>
       <div class="vote-meta">
-        <strong>${supportRatio}% support</strong>
+        <strong data-countup="${supportRatio}" data-prefix="" data-suffix="% support" data-decimals="0">0% support</strong>
         <span>${state.support.toLocaleString()} / ${state.against.toLocaleString()}</span>
       </div>
       <div class="vote-actions">
@@ -159,6 +232,14 @@ function buildApp() {
             <span>Music copyright RWA</span>
           </div>
           <button type="button" class="wallet-chip" id="wallet-button">${formatWallet(connectedWallet)}</button>
+        </div>
+
+        <div class="demo-hud reveal">
+          <div class="demo-hud-copy">
+            <span class="eyebrow">Demo mode</span>
+            <strong>${demoMode ? 'Autoplaying product tour' : 'Manual interaction mode'}</strong>
+          </div>
+          <button type="button" class="demo-toggle ${demoMode ? 'is-active' : ''}" id="demo-toggle">${demoMode ? 'Auto On' : 'Auto Off'}</button>
         </div>
 
         <main class="screen-stack">
@@ -321,17 +402,37 @@ function buildApp() {
                 <span>Verification checklist</span>
                 <textarea name="notes" rows="4" placeholder="Copyright registry proof, KYC status, metadata hash, oracle source..."></textarea>
               </label>
+              <div class="upload-panel">
+                <div class="upload-panel-head">
+                  <div>
+                    <span class="eyebrow">Source files</span>
+                    <strong>Upload supporting documents</strong>
+                  </div>
+                  <button type="button" class="secondary-button compact upload-trigger" id="upload-trigger">Upload files</button>
+                </div>
+                <input type="file" id="mint-upload-input" class="mint-file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.csv,.json,.txt">
+                <div class="upload-list">
+                  ${renderMintUploads()}
+                </div>
+              </div>
               <div class="mint-flow">
-                <span>Upload</span>
-                <span>Verify</span>
-                <span>Mint NFT</span>
-                <span>Fractionalize</span>
-                <span>Launch</span>
+                ${(['upload', 'verify', 'mint', 'fractionalize', 'launch'] as MintStage[])
+                  .map(
+                    (stage) => `
+                    <button
+                      type="button"
+                      class="mint-step ${mintStage === stage ? 'is-hot' : ''} ${canActivateMintStage(stage) ? '' : 'is-locked'}"
+                      data-mint-stage="${stage}"
+                    >
+                      ${mintStageLabel(stage)}
+                    </button>`,
+                  )
+                  .join('')}
               </div>
               <div class="mint-hints">
-                <span>ASCAP / BMI style proof</span>
-                <span>Metadata hash</span>
-                <span>Stablecoin payout ready</span>
+                <span class="${mintUploads.length ? 'is-ready' : ''}">ASCAP / BMI style proof</span>
+                <span class="${mintUploads.length ? 'is-ready' : ''}">Metadata hash</span>
+                <span class="${mintStage === 'launch' ? 'is-ready' : ''}">Stablecoin payout ready</span>
               </div>
               <button type="submit" class="primary-button wide">Create music RWA</button>
             </form>
@@ -473,12 +574,45 @@ function closeSheet() {
   sheet?.setAttribute('aria-hidden', 'true')
 }
 
-function refresh() {
+function animateCountups() {
+  const run = ++metricAnimationRun
+  document.querySelectorAll<HTMLElement>('[data-countup]').forEach((node, index) => {
+    const target = Number(node.dataset.countup ?? '0')
+    const prefix = node.dataset.prefix ?? ''
+    const suffix = node.dataset.suffix ?? ''
+    const decimals = Number(node.dataset.decimals ?? '0')
+    const start = performance.now() + index * 36
+    const duration = 860
+
+    const tick = (now: number) => {
+      if (run !== metricAnimationRun) return
+      const elapsed = Math.max(0, now - start)
+      const ratio = Math.min(1, elapsed / duration)
+      const eased = 1 - Math.pow(1 - ratio, 3)
+      node.textContent = formatDisplayNumber(prefix, suffix, target * eased, decimals)
+      if (ratio < 1) window.requestAnimationFrame(tick)
+    }
+
+    window.requestAnimationFrame(tick)
+  })
+}
+
+function renderApp() {
   const app = document.querySelector<HTMLDivElement>('#app')
   if (!app) return
   app.innerHTML = buildApp()
   wireEvents()
   triggerReveal()
+  animateCountups()
+}
+
+function refresh() {
+  const render = () => renderApp()
+  if (document.startViewTransition) {
+    document.startViewTransition(render)
+    return
+  }
+  render()
 }
 
 function switchTab(tab: string) {
@@ -503,6 +637,7 @@ function wireEvents() {
   })
 
   document.querySelector('#sheet-backdrop')?.addEventListener('click', closeSheet)
+  document.querySelector<HTMLButtonElement>('#demo-toggle')?.addEventListener('click', toggleDemoMode)
 
   document.querySelectorAll<HTMLElement>('[data-filter]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -525,6 +660,21 @@ function wireEvents() {
     refresh()
   })
 
+  document.querySelector<HTMLButtonElement>('#upload-trigger')?.addEventListener('click', () => {
+    document.querySelector<HTMLInputElement>('#mint-upload-input')?.click()
+  })
+
+  document.querySelector<HTMLInputElement>('#mint-upload-input')?.addEventListener('change', onMintUpload)
+
+  document.querySelectorAll<HTMLElement>('[data-mint-stage]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const stage = button.getAttribute('data-mint-stage') as MintStage | null
+      if (!stage || !canActivateMintStage(stage)) return
+      mintStage = stage
+      refresh()
+    })
+  })
+
   document.querySelector<HTMLFormElement>('#mint-form')?.addEventListener('submit', onMintSubmit)
 
   document.querySelectorAll<HTMLElement>('[data-vote]').forEach((button) => {
@@ -543,6 +693,83 @@ function wireEvents() {
   })
 }
 
+function onMintUpload(event: Event) {
+  const input = event.currentTarget as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  if (!files.length) return
+
+  const mapped = files.map((file) => ({
+    name: file.name,
+    sizeLabel: `${(file.size / 1024 / 1024).toFixed(file.size > 1024 * 1024 ? 1 : 2)} MB`,
+    kind: file.name.split('.').pop()?.toUpperCase() ?? 'FILE',
+  }))
+
+  mintUploads = [...mintUploads, ...mapped].slice(-4)
+  if (mintStage === 'upload') mintStage = 'verify'
+  showToast(`${files.length} file${files.length > 1 ? 's' : ''} uploaded.`)
+  input.value = ''
+  refresh()
+}
+
+function setMintField(name: string, value: string) {
+  const field = document.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(`#mint-form [name="${name}"]`)
+  if (!field) return
+  field.value = value
+  field.dispatchEvent(new Event('input', { bubbles: true }))
+  field.dispatchEvent(new Event('change', { bubbles: true }))
+}
+
+function toggleDemoMode() {
+  demoMode = !demoMode
+  window.localStorage.setItem(storageKeys.demo, demoMode ? 'on' : 'off')
+  refresh()
+  if (demoMode) startDemoMode()
+  else demoRun += 1
+}
+
+function queueDemo(delay: number, run: number, action: () => void) {
+  window.setTimeout(() => {
+    if (!demoMode || run !== demoRun) return
+    action()
+  }, delay)
+}
+
+function startDemoMode() {
+  demoRun += 1
+  const run = demoRun
+  const firstAsset = allAssets()[0]
+
+  queueDemo(500, run, () => connectWallet())
+  queueDemo(2600, run, () => {
+    if (firstAsset) renderSheet(firstAsset)
+  })
+  queueDemo(5600, run, () => closeSheet())
+  queueDemo(7600, run, () => switchTab('vault'))
+  queueDemo(10300, run, () => showToast('Stablecoin payout claimed to your wallet.'))
+  queueDemo(12800, run, () => switchTab('mint'))
+  queueDemo(15100, run, () => setMintField('artist', 'Nova Aster'))
+  queueDemo(16100, run, () => setMintField('title', 'Midnight Halo'))
+  queueDemo(17100, run, () => setMintField('raise', '120000'))
+  queueDemo(18100, run, () => setMintField('valuation', '480000'))
+  queueDemo(19400, run, () => setMintField('notes', 'Copyright registry proof verified. Metadata hash pinned. Stablecoin payout schedule ready.'))
+  queueDemo(22200, run, () => document.querySelector<HTMLButtonElement>('#mint-form button[type="submit"]')?.click())
+  queueDemo(25200, run, () => {
+    currentFilter = 'Streaming'
+    refresh()
+  })
+  queueDemo(28200, run, () => {
+    const asset = filteredAssets()[0] ?? allAssets()[0]
+    if (asset) renderSheet(asset)
+  })
+  queueDemo(31400, run, () => closeSheet())
+  queueDemo(33800, run, () => switchTab('dao'))
+  queueDemo(36500, run, () => document.querySelector<HTMLButtonElement>('[data-vote="G-12"][data-side="support"]')?.click())
+  queueDemo(40200, run, () => switchTab('discover'))
+  queueDemo(52000, run, () => {
+    if (demoMode && run === demoRun) startDemoMode()
+  })
+}
+
 function onMintSubmit(event: Event) {
   event.preventDefault()
   const form = event.currentTarget as HTMLFormElement
@@ -556,6 +783,11 @@ function onMintSubmit(event: Event) {
 
   if (!title || !artist || valuation <= 0 || raise <= 0) {
     showToast('Please complete the mint form with valid amounts.')
+    return
+  }
+
+  if (!mintUploads.length) {
+    showToast('Upload supporting files before creating the music RWA.')
     return
   }
 
@@ -577,6 +809,8 @@ function onMintSubmit(event: Event) {
 
   createdAssets = [newAsset, ...createdAssets]
   persistCreatedAssets()
+  mintStage = 'launch'
+  mintUploads = []
   showToast(`${title} is now queued for copyright verification.`)
   currentTab = 'market'
   currentFilter = 'All'
@@ -607,13 +841,19 @@ function togglePlayer() {
   isPlaying = !isPlaying
   window.clearInterval(progressTimer)
   if (isPlaying) {
-    progressTimer = window.setInterval(() => {
-      progress = progress >= 100 ? 0 : progress + 2
-      const bar = document.querySelector<HTMLElement>('.player-progress span')
-      if (bar) bar.style.width = `${progress}%`
-    }, 280)
+    startPlayerLoop()
   }
   refresh()
+}
+
+function startPlayerLoop() {
+  window.clearInterval(progressTimer)
+  progressTimer = window.setInterval(() => {
+    if (!isPlaying) return
+    progress = progress >= 100 ? 0 : progress + 2
+    const bar = document.querySelector<HTMLElement>('.player-progress span')
+    if (bar) bar.style.width = `${progress}%`
+  }, 280)
 }
 
 function triggerReveal() {
@@ -628,4 +868,7 @@ if (app) {
   app.innerHTML = buildApp()
   wireEvents()
   triggerReveal()
+  animateCountups()
+  if (isPlaying) startPlayerLoop()
+  if (demoMode) startDemoMode()
 }
