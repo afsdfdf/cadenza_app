@@ -497,31 +497,32 @@ function buildApp() {
           </section>
         </main>
 
-        <section class="player-dock reveal">
-          <button type="button" class="player-art-button" id="player-toggle">
-            <img src="${current.image}" alt="${current.title}" class="player-art">
-          </button>
-          <div class="player-copy">
-            <strong>${current.title}</strong>
-            <span>${current.artist}</span>
-          </div>
-          <div class="player-eq ${isPlaying ? 'is-playing' : ''}">
-            <span></span><span></span><span></span>
-          </div>
-          <div class="player-progress">
-            <span style="width:${progress}%"></span>
-          </div>
-          <button type="button" class="play-button" id="play-button">${isPlaying ? 'Pause' : 'Play'}</button>
-        </section>
-
-        <nav class="bottom-nav">
-          <button type="button" class="nav-item ${currentTab === 'discover' ? 'is-active' : ''}" data-nav="discover"><span>Discover</span></button>
-          <button type="button" class="nav-item ${currentTab === 'vault' ? 'is-active' : ''}" data-nav="vault"><span>Vault</span></button>
-          <button type="button" class="nav-item ${currentTab === 'mint' ? 'is-active' : ''}" data-nav="mint"><span>Mint</span></button>
-          <button type="button" class="nav-item ${currentTab === 'market' ? 'is-active' : ''}" data-nav="market"><span>Market</span></button>
-          <button type="button" class="nav-item ${currentTab === 'dao' ? 'is-active' : ''}" data-nav="dao"><span>DAO</span></button>
-        </nav>
       </div>
+
+      <section class="player-dock reveal">
+        <button type="button" class="player-art-button" id="player-toggle">
+          <img src="${current.image}" alt="${current.title}" class="player-art">
+        </button>
+        <div class="player-copy">
+          <strong>${current.title}</strong>
+          <span>${current.artist}</span>
+        </div>
+        <div class="player-eq ${isPlaying ? 'is-playing' : ''}">
+          <span></span><span></span><span></span>
+        </div>
+        <div class="player-progress">
+          <span style="width:${progress}%"></span>
+        </div>
+        <button type="button" class="play-button" id="play-button">${isPlaying ? 'Pause' : 'Play'}</button>
+      </section>
+
+      <nav class="bottom-nav">
+        <button type="button" class="nav-item ${currentTab === 'discover' ? 'is-active' : ''}" data-nav="discover"><span>Discover</span></button>
+        <button type="button" class="nav-item ${currentTab === 'vault' ? 'is-active' : ''}" data-nav="vault"><span>Vault</span></button>
+        <button type="button" class="nav-item ${currentTab === 'mint' ? 'is-active' : ''}" data-nav="mint"><span>Mint</span></button>
+        <button type="button" class="nav-item ${currentTab === 'market' ? 'is-active' : ''}" data-nav="market"><span>Market</span></button>
+        <button type="button" class="nav-item ${currentTab === 'dao' ? 'is-active' : ''}" data-nav="dao"><span>DAO</span></button>
+      </nav>
 
       <div class="sheet-backdrop hidden" id="sheet-backdrop"></div>
       <aside class="detail-sheet hidden" id="detail-sheet" aria-hidden="true"></aside>
