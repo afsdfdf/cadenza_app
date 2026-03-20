@@ -35,17 +35,20 @@ const storageKeys = {
   holdings: 'cadenza-holdings',
 }
 
+const fallbackAudioUrl =
+  'https://cdn.pixabay.com/download/audio/2022/03/15/audio_2d20d6bced.mp3?filename=chill-ambient-110997.mp3'
+
 let connectedWallet = window.localStorage.getItem(storageKeys.wallet) ?? ''
 let createdAssets = loadCreatedAssets()
 let currentTab = 'discover'
 let currentFilter = 'All'
 let activePlayer = 0
-let isPlaying = true
-let progress = 18
-let progressTimer = 0
+let isPlaying = false
+let progress = 0
 let metricAnimationRun = 0
 let holdings = loadHoldings()
 let purchaseAssetId: string | null = null
+let audioPlayer: HTMLAudioElement | null = null
 let voteState: VoteState = Object.fromEntries(
   proposals.map((proposal) => [proposal.id, { support: proposal.support, against: proposal.against }]),
 )
@@ -54,7 +57,10 @@ function loadCreatedAssets(): MusicAsset[] {
   try {
     const raw = window.localStorage.getItem(storageKeys.minted)
     if (!raw) return []
-    return JSON.parse(raw) as MusicAsset[]
+    return (JSON.parse(raw) as MusicAsset[]).map((asset, index) => ({
+      ...asset,
+      audioUrl: asset.audioUrl ?? assets[index % assets.length]?.audioUrl ?? fallbackAudioUrl,
+    }))
   } catch {
     return []
   }
@@ -84,6 +90,18 @@ function formatWallet(address: string) {
 
 function allAssets() {
   return [...createdAssets, ...assets]
+}
+
+function currentTrackList() {
+  const tracks = allAssets()
+  if (!tracks.length) return assets
+  if (activePlayer >= tracks.length) activePlayer = 0
+  return tracks
+}
+
+function currentTrack() {
+  const tracks = currentTrackList()
+  return tracks[activePlayer] ?? tracks[0]
 }
 
 function filteredAssets() {
@@ -224,10 +242,10 @@ function renderProposalCard(id: string) {
 }
 
 function buildApp() {
-  const tracks = allAssets()
-  const current = tracks[activePlayer] ?? tracks[0]
+  const tracks = currentTrackList()
+  const current = currentTrack()
   const marketAssets = filteredAssets()
-  const purchaseAsset = purchaseAssetId ? allAssets().find((asset) => asset.id === purchaseAssetId) : null
+  const purchaseAsset = purchaseAssetId ? tracks.find((asset) => asset.id === purchaseAssetId) : null
   const unitPrice = purchaseAsset ? assetUnitPrice(purchaseAsset) : 0
 
   return `
@@ -497,32 +515,31 @@ function buildApp() {
           </section>
         </main>
 
+        <section class="player-dock reveal">
+          <button type="button" class="player-art-button" id="player-toggle" aria-label="Skip to next track">
+            <img src="${current.image}" alt="${current.title}" class="player-art">
+          </button>
+          <div class="player-copy">
+            <strong>${current.title}</strong>
+            <span>${current.artist}</span>
+          </div>
+          <div class="player-eq ${isPlaying ? 'is-playing' : ''}">
+            <span></span><span></span><span></span>
+          </div>
+          <button type="button" class="play-button" id="play-button">${isPlaying ? 'Pause' : 'Play'}</button>
+          <div class="player-progress">
+            <span style="width:${progress}%"></span>
+          </div>
+        </section>
+
+        <nav class="bottom-nav">
+          <button type="button" class="nav-item ${currentTab === 'discover' ? 'is-active' : ''}" data-nav="discover"><span>Discover</span></button>
+          <button type="button" class="nav-item ${currentTab === 'vault' ? 'is-active' : ''}" data-nav="vault"><span>Vault</span></button>
+          <button type="button" class="nav-item ${currentTab === 'mint' ? 'is-active' : ''}" data-nav="mint"><span>Mint</span></button>
+          <button type="button" class="nav-item ${currentTab === 'market' ? 'is-active' : ''}" data-nav="market"><span>Market</span></button>
+          <button type="button" class="nav-item ${currentTab === 'dao' ? 'is-active' : ''}" data-nav="dao"><span>DAO</span></button>
+        </nav>
       </div>
-
-      <section class="player-dock reveal">
-        <button type="button" class="player-art-button" id="player-toggle">
-          <img src="${current.image}" alt="${current.title}" class="player-art">
-        </button>
-        <div class="player-copy">
-          <strong>${current.title}</strong>
-          <span>${current.artist}</span>
-        </div>
-        <div class="player-eq ${isPlaying ? 'is-playing' : ''}">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="player-progress">
-          <span style="width:${progress}%"></span>
-        </div>
-        <button type="button" class="play-button" id="play-button">${isPlaying ? 'Pause' : 'Play'}</button>
-      </section>
-
-      <nav class="bottom-nav">
-        <button type="button" class="nav-item ${currentTab === 'discover' ? 'is-active' : ''}" data-nav="discover"><span>Discover</span></button>
-        <button type="button" class="nav-item ${currentTab === 'vault' ? 'is-active' : ''}" data-nav="vault"><span>Vault</span></button>
-        <button type="button" class="nav-item ${currentTab === 'mint' ? 'is-active' : ''}" data-nav="mint"><span>Mint</span></button>
-        <button type="button" class="nav-item ${currentTab === 'market' ? 'is-active' : ''}" data-nav="market"><span>Market</span></button>
-        <button type="button" class="nav-item ${currentTab === 'dao' ? 'is-active' : ''}" data-nav="dao"><span>DAO</span></button>
-      </nav>
 
       <div class="sheet-backdrop hidden" id="sheet-backdrop"></div>
       <aside class="detail-sheet hidden" id="detail-sheet" aria-hidden="true"></aside>
@@ -630,6 +647,108 @@ function closePurchaseSheet() {
   refresh()
 }
 
+function ensureAudioPlayer() {
+  if (audioPlayer) return audioPlayer
+
+  audioPlayer = new Audio()
+  audioPlayer.preload = 'metadata'
+  audioPlayer.crossOrigin = 'anonymous'
+  audioPlayer.setAttribute('playsinline', 'true')
+
+  audioPlayer.addEventListener('timeupdate', () => {
+    const duration = Number.isFinite(audioPlayer?.duration) ? audioPlayer?.duration ?? 0 : 0
+    progress = duration > 0 ? ((audioPlayer?.currentTime ?? 0) / duration) * 100 : 0
+    syncPlayerUI()
+  })
+
+  audioPlayer.addEventListener('loadedmetadata', () => {
+    progress = 0
+    syncPlayerUI()
+  })
+
+  audioPlayer.addEventListener('play', () => {
+    isPlaying = true
+    syncPlayerUI()
+  })
+
+  audioPlayer.addEventListener('pause', () => {
+    isPlaying = false
+    syncPlayerUI()
+  })
+
+  audioPlayer.addEventListener('ended', () => {
+    setTrack(activePlayer + 1, true)
+  })
+
+  audioPlayer.addEventListener('error', () => {
+    isPlaying = false
+    syncPlayerUI()
+    showToast('Audio stream is unavailable right now.')
+  })
+
+  return audioPlayer
+}
+
+function syncPlayerUI() {
+  const track = currentTrack()
+  if (!track) return
+
+  const art = document.querySelector<HTMLImageElement>('.player-art')
+  const title = document.querySelector<HTMLElement>('.player-copy strong')
+  const artist = document.querySelector<HTMLElement>('.player-copy span')
+  const button = document.querySelector<HTMLButtonElement>('#play-button')
+  const eq = document.querySelector<HTMLElement>('.player-eq')
+  const bar = document.querySelector<HTMLElement>('.player-progress span')
+
+  if (art) {
+    art.src = track.image
+    art.alt = track.title
+  }
+  if (title) title.textContent = track.title
+  if (artist) artist.textContent = track.artist
+  if (button) button.textContent = isPlaying ? 'Pause' : 'Play'
+  if (eq) eq.classList.toggle('is-playing', isPlaying)
+  if (bar) bar.style.width = `${Math.max(0, Math.min(progress, 100))}%`
+}
+
+function syncAudioTrack(autoplay = false) {
+  const track = currentTrack()
+  if (!track) return
+
+  const player = ensureAudioPlayer()
+  const nextSrc = track.audioUrl ?? fallbackAudioUrl
+  const currentSrc = player.getAttribute('data-track-src') ?? ''
+
+  if (currentSrc !== nextSrc) {
+    player.pause()
+    player.src = nextSrc
+    player.setAttribute('data-track-src', nextSrc)
+    player.load()
+    progress = 0
+  }
+
+  if (autoplay) {
+    player.play().catch(() => {
+      isPlaying = false
+      syncPlayerUI()
+    })
+  } else {
+    syncPlayerUI()
+  }
+}
+
+function setTrack(nextIndex: number, autoplay = isPlaying) {
+  const tracks = currentTrackList()
+  if (!tracks.length) return
+  const normalizedIndex = ((nextIndex % tracks.length) + tracks.length) % tracks.length
+  activePlayer = normalizedIndex
+  progress = 0
+  refresh()
+  window.requestAnimationFrame(() => {
+    syncAudioTrack(autoplay)
+  })
+}
+
 function animateCountups() {
   const run = ++metricAnimationRun
   document.querySelectorAll<HTMLElement>('[data-countup]').forEach((node, index) => {
@@ -660,6 +779,8 @@ function renderApp() {
   wireEvents()
   triggerReveal()
   animateCountups()
+  syncAudioTrack(isPlaying)
+  syncPlayerUI()
 }
 
 function refresh() {
@@ -721,9 +842,7 @@ function wireEvents() {
 
   document.querySelector<HTMLButtonElement>('#play-button')?.addEventListener('click', togglePlayer)
   document.querySelector<HTMLButtonElement>('#player-toggle')?.addEventListener('click', () => {
-    activePlayer = (activePlayer + 1) % allAssets().length
-    progress = 18
-    refresh()
+    setTrack(activePlayer + 1, isPlaying)
   })
 
   document.querySelector<HTMLFormElement>('#purchase-form')?.addEventListener('submit', onPurchaseSubmit)
@@ -836,6 +955,7 @@ function onMintSubmit(event: Event) {
     rights,
     perks: ['Genesis supporter badge', 'Whitelist presale', 'Creator room access'],
     image: '/cadenza/hj.png',
+    audioUrl: assets[createdAssets.length % assets.length]?.audioUrl ?? fallbackAudioUrl,
   }
 
   createdAssets = [newAsset, ...createdAssets]
@@ -867,22 +987,17 @@ async function connectWallet() {
 }
 
 function togglePlayer() {
-  isPlaying = !isPlaying
-  window.clearInterval(progressTimer)
-  if (isPlaying) {
-    startPlayerLoop()
+  const player = ensureAudioPlayer()
+  if (player.paused) {
+    player.play().catch(() => {
+      isPlaying = false
+      syncPlayerUI()
+      showToast('Tap play again if audio permission was blocked.')
+    })
+    return
   }
-  refresh()
-}
 
-function startPlayerLoop() {
-  window.clearInterval(progressTimer)
-  progressTimer = window.setInterval(() => {
-    if (!isPlaying) return
-    progress = progress >= 100 ? 0 : progress + 2
-    const bar = document.querySelector<HTMLElement>('.player-progress span')
-    if (bar) bar.style.width = `${progress}%`
-  }, 280)
+  player.pause()
 }
 
 function triggerReveal() {
@@ -898,6 +1013,7 @@ if (app) {
   wireEvents()
   triggerReveal()
   animateCountups()
-  if (isPlaying) startPlayerLoop()
+  syncAudioTrack(false)
+  syncPlayerUI()
 }
 

@@ -12,6 +12,7 @@ export type MusicAsset = {
   rights: string
   perks: string[]
   image: string
+  audioUrl?: string
 }
 
 export type Proposal = {
@@ -51,6 +52,8 @@ export const assets: MusicAsset[] = [
     rights: 'Streaming + sync rights',
     perks: ['VIP livestream', 'Limited lyric NFT', 'Backstage presale'],
     image: '/cadenza/hj.png',
+    audioUrl:
+      'https://cdn.pixabay.com/download/audio/2022/03/15/audio_2d20d6bced.mp3?filename=chill-ambient-110997.mp3',
   },
   {
     id: 'CDZ-204',
@@ -66,6 +69,8 @@ export const assets: MusicAsset[] = [
     rights: 'Master royalty share',
     perks: ['Demo access', 'Collector poster', 'Private Discord role'],
     image: '/cadenza/hj.png',
+    audioUrl:
+      'https://cdn.pixabay.com/download/audio/2022/10/19/audio_1a4a6b58fc.mp3?filename=deep-ambient-124131.mp3',
   },
   {
     id: 'CDZ-319',
@@ -81,6 +86,8 @@ export const assets: MusicAsset[] = [
     rights: 'Publishing + live rights',
     perks: ['Scoring session notes', 'Genesis pass', 'Community drop'],
     image: '/cadenza/hj.png',
+    audioUrl:
+      'https://cdn.pixabay.com/download/audio/2022/03/15/audio_4a7462f2b4.mp3?filename=space-ambient-110996.mp3',
   },
 ]
 
